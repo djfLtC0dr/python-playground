@@ -130,24 +130,15 @@ def load_pdf(pp):
   lst_dfs = []
   for l_wod in list_wods:
     for wod in l_wod:
-      #cols = ['ROE', 'RPE']
       # dictionary storing the data
       wod_data = {
           'ROE': wod[0],
           'RPE': wod[1]
       }
-      #i = dict(day = (start_dt.strftime("%Y-%m-%d")))
-      #dfWod = pd.DataFrame.from_dict([w.get('roe'), w.get('rpe')])
-      #dfWod.columns = cols
-      # df.append deprecated so using list of dict items to append then concat    
-      #l = list(w.items())
-      #odf = pd.DataFrame(l)
+      #create DataFrame by passing dictionary wrapped in a list
       odf = pd.DataFrame.from_dict([wod_data])
       lst_dfs.append(odf)
-      #print(wod)
   df_wods = pd.concat(lst_dfs, ignore_index=True)
-# We should always be expecting 3 rows--M-W-F--Lower Volume
-  #print(df_wods.loc[0, :])
   print(df_wods)
        
 # Obtain type of workout to pull into database
