@@ -111,17 +111,41 @@ def load_pdf(pp):
   # returns a list of lists, with each inner list representing a row in the table. 
   list_wods = p0.extract_tables()
 
-  def parse_wod(wod):
-    wod[0] = wod[0].replace('\n', '')
-    wod[0].split(',', 1)[0]
-    return wod
+  def replace_chars(s):
+    return s.replace('\n', '') #empty string
+
+  def recursively_apply(l, f):
+    for n, i in enumerate(l):
+        if isinstance(i, list): # check if i is type list
+            l[n] = recursively_apply(l[n], f)
+        elif isinstance(i, str): # check if i is type str
+            l[n] = f(i)
+        elif i is None:
+            l[n] = '' # nothing to replace there can be only one instance of None
+    return l
   
   # Iterate the lists and clean-up/parse strings
-  for list in list_wods:
-    for wod in list:
-      parse_wod(wod)
+  list_wods = recursively_apply(list_wods, replace_chars)
+  # Get the data into a dataframe 
+  lst_dfs = []
+  for l_wod in list_wods:
+    for wod in l_wod:
+      #cols = ['ROE', 'RPE']
+      # dictionary storing the data
+      wod_data = {
+          'ROE': wod[0],
+          'RPE': wod[1]
+      }
+      #i = dict(day = (start_dt.strftime("%Y-%m-%d")))
+      #dfWod = pd.DataFrame.from_dict([w.get('roe'), w.get('rpe')])
+      #dfWod.columns = cols
+      # df.append deprecated so using list of dict items to append then concat    
+      #l = list(w.items())
+      #odf = pd.DataFrame(l)
+      odf = pd.DataFrame.from_dict([wod_data])
+      lst_dfs.append(odf)
       #print(wod)
-  df_wods = pd.DataFrame([sub[0].split(",") for sub in list_wods])  
+  df_wods = pd.concat(lst_dfs, ignore_index=True)
 # We should always be expecting 3 rows--M-W-F--Lower Volume
   #print(df_wods.loc[0, :])
   print(df_wods)
