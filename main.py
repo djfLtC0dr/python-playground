@@ -4,6 +4,7 @@
 from datetime import timedelta, date
 import pdfplumber
 import pandas as pd
+#from date_util import date_util as dtutil
 
 # selenium 
 from selenium import webdriver 
@@ -16,6 +17,7 @@ from selenium.webdriver.support import expected_conditions as EC
 chrome_options = Options() 
 chrome_options.add_argument('--no-sandbox') 
 chrome_options.add_argument('--disable-dev-shm-usage')
+chrome_options.add_argument("--headless")
 
 # List obj to store weekday-only dates
 workout_dates = []
@@ -31,9 +33,10 @@ DEUCE = "http://www.deucegym.com/community/" # Webscrape
 SSLP = "https://startingstrength.com/get-started/programs" # Webscrape
 MASH = "mash-evolution.pdf" # PDF
 
-pdf_strength_con_low_vol_pages = [*range(379, 420, 1)]
+pdf_sc_lv_pages = [*range(379, 420, 1)]
 
 GPP_type = {
+  0 : 'NOPERATOR',
   1 : 'ATHLETICS',
   2 : 'GARAGE',
   3 : 'TSAC',
@@ -42,7 +45,7 @@ GPP_type = {
 
 valid_gpp_type = False
 # User input options
-valid_inputs = [1,2,3,4]
+valid_inputs = [0,1,2,3,4]
 # Narrow scope to scrape based on athlete type
 while not valid_gpp_type:
   try:
@@ -73,7 +76,7 @@ for dt in daterange(start_dt, end_dt):
 # TODO load data into database code 
 def webscrape(url, wod_type = 'NLP'):
   driver = webdriver.Chrome(options=chrome_options) 
-  if wod_type == 'NLP':
+  if wod_type == 'NLP': # NOVICE Starting Strength
     driver.get(url)
     try:
       nlp_elements = driver.find_elements(By.CLASS_NAME, "proggy")
@@ -87,7 +90,7 @@ def webscrape(url, wod_type = 'NLP'):
       print(nlp_df)
     finally:
       driver.quit()      
-  else:
+  else: # DEUCE GPP Athlete or Garage Gym Warrior
     for wod_date in workout_dates:
       driver.get(url+wod_date)
       try:
@@ -147,7 +150,12 @@ if GPP_type[gpp] == 'ATHLETICS':
 elif GPP_type[gpp] == 'GARAGE':
   webscrape(DEUCE, 'GARAGE')
 elif GPP_type[gpp] == 'TSAC':
-  load_pdf(pdf_strength_con_low_vol_pages)
+  load_pdf(pdf_sc_lv_pages)
+elif GPP_type[gpp] == 'SSLP':
+  webscrape(SSLP)
 else:
-  webscrape(SSLP)    
-#print(GPP_type[gpp])
+  # Used for testing imports in replit
+  #dtutil()
+  print(GPP_type[gpp])
+  pass # NOPERATOR do nothing
+
