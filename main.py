@@ -32,8 +32,10 @@ gpp = 0
 DEUCE = "http://www.deucegym.com/community/" # Webscrape
 SSLP = "https://startingstrength.com/get-started/programs" # Webscrape
 MASH = "mash-evolution.pdf" # PDF
-
+# Pages of the mash-evolution TSAC macrocycle 
 pdf_sc_lv_pages = [*range(379, 420, 1)]
+# variable to store the loaded SSLP cycle
+dfSSLP = pd.Dataframe()
 
 GPP_type = {
   0 : 'NOPERATOR',
@@ -86,7 +88,7 @@ def webscrape(url, wod_type = 'NLP'):
         nlp_phase_innerHTML = nlp_phase.get_attribute('innerHTML')
         tmp.append(pd.read_html("<table>" + nlp_phase_innerHTML + "</table>")[0])
       nlp_df = pd.concat(tmp, ignore_index=True)
-      # TODO: load data into monthy cycle using 2.5-5.0lb. increments
+      
       print(nlp_df)
     finally:
       driver.quit()      
@@ -143,8 +145,19 @@ def load_pdf(pp):
       lst_dfs.append(odf)
   df_wods = pd.concat(lst_dfs, ignore_index=True)
   print(df_wods)
-       
-# Obtain type of workout to pull into database
+
+def load_csv(file_path):
+  boolSSLP = False
+  try:
+    dfSSLP = pd.read_csv(file_path)
+    print("sslp file exists")
+    boolSSLP = True
+    return boolSSLP
+  except FileNotFoundError:
+    return boolSSLP
+
+  
+# Obtain type of workout for follow-on processing
 if GPP_type[gpp] == 'ATHLETICS':
   webscrape(DEUCE, 'ATHLETICS')
 elif GPP_type[gpp] == 'GARAGE':
@@ -152,7 +165,11 @@ elif GPP_type[gpp] == 'GARAGE':
 elif GPP_type[gpp] == 'TSAC':
   load_pdf(pdf_sc_lv_pages)
 elif GPP_type[gpp] == 'SSLP':
-  webscrape(SSLP)
+  if load_csv("sslp.csv"):
+    pass
+    # TODO instantiate new SSLP class with calc methods
+  else:
+    webscrape(SSLP)
 else:
   # Used for testing imports in replit
   #dtutil()
