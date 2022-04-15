@@ -1,6 +1,7 @@
 # This is a Workout Of the Day (WOD) app, based on user input, it either pulls data from 
 # a website that requires a user to click on an href tag to load content into the website 
 # or loads data from a local PDF File.
+import typing
 from datetime import timedelta, date
 import ssl
 import pdfplumber
@@ -66,7 +67,7 @@ while not valid_gpp_type:
     print(strValueError)
 
 # Iterator/Generator to return += date + days inclusive from start to end date of cycle
-def daterange(date1, date2):
+def daterange(date1: date, date2: date):
     for n in range(int ((date2 - date1).days) + 1): # + 1 because range is exclusive
         yield date1 + timedelta(n)
 
@@ -80,12 +81,13 @@ for dt in daterange(start_dt, end_dt):
         workout_dates.append(dt.strftime(dt_str_format))
 #print(workout_dates)
 
-def replace_chars(s):
-  s.replace('\n', '').replace('*', '') # empty string and astrisks
+# Replace \n and * in code with empty string
+def replace_chars(s: str) -> str:
+  s.replace('\n', '').replace('*', '') 
   return s
 
 # Pulls data from websites using selenium--SSLP is static tables, DEUCE is dynamic
-def webscrape(url, wod_type = 'NLP'):
+def webscrape(url: str, wod_type = 'NLP') -> None:
   driver = webdriver.Chrome(options=chrome_options) 
   if wod_type == 'NLP': # NOVICE Starting Strength
     driver.get(url)
@@ -117,14 +119,15 @@ def webscrape(url, wod_type = 'NLP'):
         driver.quit()    
 
 # TODO This still needs work
-def load_pdf(pp):
+def load_pdf(pp: list) -> pd.DataFrame:
   # Load the PDF
   pdf = pdfplumber.open(MASH)
   # Save data to a pandas dataframe.
   p0 = pdf.pages[pp[0]]
   # returns a list of lists, with each inner list representing a row in the table. 
   list_wods = p0.extract_tables()
-
+  
+  # Recursion to clean-up data
   def recursively_apply(l, f):
     for n, i in enumerate(l):
         if isinstance(i, list): # check if i is type list
@@ -150,9 +153,10 @@ def load_pdf(pp):
       odf = pd.DataFrame.from_dict([wod_data])
       lst_dfs.append(odf)
   df_wods = pd.concat(lst_dfs, ignore_index=True)
-  print(df_wods)
+  #print(df_wods)
+  return df_wods
 
-def load_csv(file_path):
+def load_csv(file_path: str):
   boolSSLP = False
   try:
     dfSSLP = pd.read_csv(file_path)
@@ -189,14 +193,15 @@ def calc_sslp_ph1():
     ph1_rx_dl_loading.append(dl)
   return [ph1_rx_bs_loading, ph1_rx_sp_bp_loading, ph1_rx_dl_loading, 'Phase 2-TBD', 'Phase 2-TBD', 'Phase 2-TBD', 'Phase 3-TBD', 'Phase 3-TBD', 'Phase 3-TBD']
 
-def print_sslp_ph1():
-    dfSSLP = load_csv(sslp_csv)
-    if len(dfSSLP.index) != 0:
-      dfSSLP = dfSSLP.assign(Phase_1_RX_Loads=calc_sslp_ph1())
-      print(dfSSLP)
-    else:
+def load_data_sslp_ph1() -> pd.DataFrame:
+  #python 3.8 "Walrus Operator" to ensure this only runs max 2x
+  dfSSLP = load_csv(sslp_csv)
+  while (n := len(dfSSLP.index)) != 0:
+    dfSSLP = dfSSLP.assign(Phase_1_RX_Loads=calc_sslp_ph1())
+    return dfSSLP
+  else:
       webscrape(SSLP)
-      print_sslp_ph1()
+      load_data_sslp_ph1()
 
 # Obtain type of workout for follow-on processing
 if GPP_type[gpp] == 'ATHLETICS':
@@ -206,11 +211,9 @@ elif GPP_type[gpp] == 'GARAGE':
 elif GPP_type[gpp] == 'TSAC':
   load_pdf(pdf_sc_lv_pages)
 elif GPP_type[gpp] == 'SSLP':
-  print_sslp_ph1()
+  print(load_data_sslp_ph1())
     # TODO instantiate new SSLP class with calc methods
 else:
-  # Used for testing imports in replit
-  #dtutil()
   print(GPP_type[gpp])
   pass # NOPERATOR do nothing
 
