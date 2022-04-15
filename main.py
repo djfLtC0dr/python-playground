@@ -2,6 +2,7 @@
 # a website that requires a user to click on an href tag to load content into the website 
 # or loads data from a local PDF File.
 from datetime import timedelta, date
+import ssl
 import pdfplumber
 import pandas as pd
 #from date_util import date_util as dtutil
@@ -19,12 +20,12 @@ chrome_options.add_argument('--no-sandbox')
 chrome_options.add_argument('--disable-dev-shm-usage')
 chrome_options.add_argument("--headless")
 
-# List obj to store weekday-only dates
+# List obj to store weekday-only dates as strings
 workout_dates = []
 # Start of cycle
 start_dt = date(2021,11,29)
 # End of cycle
-end_dt = date(2022,12,31)
+end_dt = date(2021,12,31)
 #end_dt = date(2022,2,25)
 # store input key
 gpp = 0
@@ -35,7 +36,11 @@ MASH = "mash-evolution.pdf" # PDF
 # Pages of the mash-evolution TSAC macrocycle 
 pdf_sc_lv_pages = [*range(379, 420, 1)]
 # variable to store the loaded SSLP cycle
-dfSSLP = pd.Dataframe()
+dfSSLP = pd.DataFrame()
+# csv to store the SSLP Macro Cycle
+sslp_csv = "sslp.csv"
+# date format
+dt_str_format = "%Y-%m-%d"
 
 GPP_type = {
   0 : 'NOPERATOR',
@@ -72,10 +77,14 @@ for dt in daterange(start_dt, end_dt):
     weekend = [6,7]
     if dt.isoweekday() not in weekend: 
         # workout_dates is formatted to correspond to the deucegym.com URL pattern
-        workout_dates.append(dt.strftime("%Y-%m-%d"))
+        workout_dates.append(dt.strftime(dt_str_format))
 #print(workout_dates)
 
-# TODO load data into database code 
+def replace_chars(s):
+  s.replace('\n', '').replace('*', '') # empty string and astrisks
+  return s
+
+# Pulls data from websites using selenium--SSLP is static tables, DEUCE is dynamic
 def webscrape(url, wod_type = 'NLP'):
   driver = webdriver.Chrome(options=chrome_options) 
   if wod_type == 'NLP': # NOVICE Starting Strength
@@ -85,11 +94,11 @@ def webscrape(url, wod_type = 'NLP'):
       # df.append deprecated so using tmp list of dataframes to append then concat 
       tmp = []      
       for nlp_phase in nlp_elements:
-        nlp_phase_innerHTML = nlp_phase.get_attribute('innerHTML')
+        nlp_phase_innerHTML = replace_chars(nlp_phase.get_attribute('innerHTML'))
         tmp.append(pd.read_html("<table>" + nlp_phase_innerHTML + "</table>")[0])
       nlp_df = pd.concat(tmp, ignore_index=True)
-      
-      print(nlp_df)
+      nlp_df.to_csv('sslp.csv', encoding='utf-8', index=False)
+      #print(calc_sslp_ph1())
     finally:
       driver.quit()      
   else: # DEUCE GPP Athlete or Garage Gym Warrior
@@ -115,9 +124,6 @@ def load_pdf(pp):
   p0 = pdf.pages[pp[0]]
   # returns a list of lists, with each inner list representing a row in the table. 
   list_wods = p0.extract_tables()
-
-  def replace_chars(s):
-    return s.replace('\n', '') #empty string
 
   def recursively_apply(l, f):
     for n, i in enumerate(l):
@@ -150,13 +156,48 @@ def load_csv(file_path):
   boolSSLP = False
   try:
     dfSSLP = pd.read_csv(file_path)
-    print("sslp file exists")
-    boolSSLP = True
-    return boolSSLP
+    return dfSSLP
   except FileNotFoundError:
     return boolSSLP
 
-  
+# % reference => https://www.t-nation.com/training/know-your-ratios-destroy-weaknesses/
+# Bench Press: 75% of back squat
+# Powerlifting Deadlift: 120% of back squat 
+# Military Press (strict): 45% of back squat
+# Power Clean: 68% of back squat
+def calc_sslp_ph1():
+  one_rm_bs = int(input("What is your 1RM Back Squat?\n"))
+  one_rm_bp = (one_rm_bs * .75)
+  one_rm_sp = (one_rm_bs * .45)
+  one_rm_dl = (one_rm_bs * 1.20)
+  bs_pct_inc = 2.5
+  bp_pct_inc = 2.0
+  sp_pct_inc = 1.5
+  dl_pct_inc = 3.5
+  pct_1rm = .80
+  ph1_rx_bs_loading = []
+  ph1_rx_sp_bp_loading = []
+  ph1_rx_dl_loading = []
+  for i in range(1, len(workout_dates), 5):
+    # starting at 80% to allow reasonable linear progression
+    bs = str((one_rm_bs * pct_1rm) + (i * bs_pct_inc))
+    bp = str((one_rm_bp * pct_1rm) + (i * bp_pct_inc))
+    sp = str((one_rm_sp * pct_1rm) + (i * sp_pct_inc))
+    dl = str((one_rm_dl * pct_1rm) + (i * dl_pct_inc))
+    ph1_rx_bs_loading.append(bs)
+    ph1_rx_sp_bp_loading.append(sp + '/' + bp)
+    ph1_rx_dl_loading.append(dl)
+  return [ph1_rx_bs_loading, ph1_rx_sp_bp_loading, ph1_rx_dl_loading, 'Phase 2-TBD', 'Phase 2-TBD', 'Phase 2-TBD', 'Phase 3-TBD', 'Phase 3-TBD', 'Phase 3-TBD']
+
+def print_sslp_ph1():
+    dfSSLP = load_csv(sslp_csv)
+    if len(dfSSLP.index) != 0:
+      dfSSLP = dfSSLP.assign(Phase_1_RX_Loads=calc_sslp_ph1())
+      print(dfSSLP)
+    else:
+      webscrape(SSLP)
+      print_sslp_ph1()
+
 # Obtain type of workout for follow-on processing
 if GPP_type[gpp] == 'ATHLETICS':
   webscrape(DEUCE, 'ATHLETICS')
@@ -165,11 +206,8 @@ elif GPP_type[gpp] == 'GARAGE':
 elif GPP_type[gpp] == 'TSAC':
   load_pdf(pdf_sc_lv_pages)
 elif GPP_type[gpp] == 'SSLP':
-  if load_csv("sslp.csv"):
-    pass
+  print_sslp_ph1()
     # TODO instantiate new SSLP class with calc methods
-  else:
-    webscrape(SSLP)
 else:
   # Used for testing imports in replit
   #dtutil()
