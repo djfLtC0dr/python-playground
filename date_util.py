@@ -22,11 +22,11 @@ name = "Dan Fawcett"
 # to the function caller. The month text and day text may be two digits padded a 0 if a
 # single digit number.
 
-def split_str(date_str):
+def split_str(date_str: str) -> list:
     return (date_str.split('-'))
 
 # Implements Problem 2
-def parse_date_string(date_str):
+def parse_date_string(date_str: str) -> date:
     ret_date = date(2022, 4, 13)
     if date_str.count('-') == 0:
         # first month and first day of year
@@ -77,7 +77,7 @@ assert d4.day == 25
 
 # Single-digit strings converted to ints else presumes date_string calls the function as argument
 # returns list converted to tuple
-def parse_list(l, f):
+def parse_list(l: list, f: callable) -> list:
     lst_tuples = []
     for i in l:
         if len(i) == 1:
@@ -88,7 +88,7 @@ def parse_list(l, f):
 
 
 # Reads input CSV file, parses returns tuples
-def read_dataset_csv_file(file_path):
+def read_dataset_csv_file(file_path: str) -> list:
     with open(file_path) as csvfile:
         csvReader = csv.reader(csvfile, delimiter=',')
         lst_tuples = []
