@@ -1,6 +1,7 @@
 # This is a Workout Of the Day (WOD) app, based on user input, it either pulls data from 
 # a website that requires a user to click on an href tag to load content into the website 
 # or loads data from a local PDF File.
+from wod import Wod
 import typing
 from datetime import timedelta, date
 import ssl
@@ -29,7 +30,7 @@ start_dt = date(2021,11,29)
 end_dt = date(2021,12,31)
 #end_dt = date(2022,2,25)
 # store input key
-gpp = 0
+wod = Wod(0)
 # Constant URL + File Strings
 DEUCE = "http://www.deucegym.com/community/" # Webscrape
 SSLP = "https://startingstrength.com/get-started/programs" # Webscrape
@@ -43,28 +44,17 @@ sslp_csv = "sslp.csv"
 # date format
 dt_str_format = "%Y-%m-%d"
 
-GPP_type = {
-  0 : 'NOPERATOR',
-  1 : 'ATHLETICS',
-  2 : 'GARAGE',
-  3 : 'TSAC',
-  4 : 'SSLP'
-}
-
 valid_gpp_type = False
 # User input options
 valid_inputs = [0,1,2,3,4]
 # Narrow scope to scrape based on athlete type
 while not valid_gpp_type:
   try:
-    gpp = int(input("Enter the number corresponding to the type of athlete that best describes you:\n1) Functional Fitness;\n2) Garage Gym Warrior;\n3) Tactical;\n4) Novice \n"))
-    if gpp in valid_inputs:
+    wod = Wod(int(input("Enter the number corresponding to the type of athlete that best describes you:\n1) Functional Fitness;\n2) Garage Gym Warrior;\n3) Tactical;\n4) Novice \n")))
+    if wod.type in valid_inputs:
       valid_gpp_type = True
-    else:
-      raise ValueError 
-  except ValueError:
-    strValueError = "Invalid number entry, please enter a number 1, 2, 3, or 4"
-    print(strValueError)
+  except ValueError as e:
+    print(str(e))
 
 # Iterator/Generator to return += date + days inclusive from start to end date of cycle
 def daterange(date1: date, date2: date):
@@ -156,13 +146,13 @@ def load_pdf(pp: list) -> pd.DataFrame:
   #print(df_wods)
   return df_wods
 
-def load_csv(file_path: str):
-  boolSSLP = False
+def load_csv(file_path: str) -> pd.DataFrame:
+  emptyDF = pd.DataFrame()
   try:
     dfSSLP = pd.read_csv(file_path)
     return dfSSLP
   except FileNotFoundError:
-    return boolSSLP
+    return emptyDF
 
 # % reference => https://www.t-nation.com/training/know-your-ratios-destroy-weaknesses/
 # Bench Press: 75% of back squat
@@ -194,9 +184,8 @@ def calc_sslp_ph1():
   return [ph1_rx_bs_loading, ph1_rx_sp_bp_loading, ph1_rx_dl_loading, 'Phase 2-TBD', 'Phase 2-TBD', 'Phase 2-TBD', 'Phase 3-TBD', 'Phase 3-TBD', 'Phase 3-TBD']
 
 def load_data_sslp_ph1() -> pd.DataFrame:
-  #python 3.8 "Walrus Operator" to ensure this only runs max 2x
   dfSSLP = load_csv(sslp_csv)
-  while (n := len(dfSSLP.index)) != 0:
+  if len(dfSSLP.index) != 0:
     dfSSLP = dfSSLP.assign(Phase_1_RX_Loads=calc_sslp_ph1())
     return dfSSLP
   else:
@@ -204,16 +193,16 @@ def load_data_sslp_ph1() -> pd.DataFrame:
       load_data_sslp_ph1()
 
 # Obtain type of workout for follow-on processing
-if GPP_type[gpp] == 'ATHLETICS':
-  webscrape(DEUCE, 'ATHLETICS')
-elif GPP_type[gpp] == 'GARAGE':
-  webscrape(DEUCE, 'GARAGE')
-elif GPP_type[gpp] == 'TSAC':
+if Wod.GPP_TYPES[wod.type] == 'ATHLETICS':
+  webscrape(DEUCE, Wod.GPP_TYPES[wod.type])
+elif Wod.GPP_TYPES[wod.type] == 'GARAGE':
+  webscrape(DEUCE, Wod.GPP_TYPES[wod.type])
+elif Wod.GPP_TYPES[wod.type]  == 'TSAC':
   load_pdf(pdf_sc_lv_pages)
-elif GPP_type[gpp] == 'SSLP':
+elif Wod.GPP_TYPES[wod.type]  == 'SSLP':
   print(load_data_sslp_ph1())
     # TODO instantiate new SSLP class with calc methods
 else:
-  print(GPP_type[gpp])
+  print(Wod.GPP_TYPES[wod.type])
   pass # NOPERATOR do nothing
 
