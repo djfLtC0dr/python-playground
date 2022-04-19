@@ -1,5 +1,6 @@
 from datetime import timedelta, date
 import pandas as pd
+from web_data import WebData
 
 class Gpp:  
   TYPES = {
@@ -25,16 +26,16 @@ class Cycle():
     self.generate_workout_dates()
 
     # Iterator/Generator to return += date + days inclusive from start to end date of cycle
-  def date_range(date1: date, date2: date):
-    for n in range(int ((date2 - date1).days) + 1): # + 1 because range is exclusive
-        yield date1 + timedelta(n)
+  def date_range(self):
+    for n in range(int ((self.end_dt - self.start_dt).days) + 1): # + 1 because range is exclusive
+        yield self.start_dt + timedelta(n)
   
   def add_workout_date(self, workout_date: str):
     self.workout_dates.append(workout_date) 
 
   # Generate array of workout dates simulating a 30-day trial
   def generate_workout_dates(self):
-    for dt in self.date_range(self.start_dt, self.end_dt):
+    for dt in self.date_range():
         # deucegym.com only posts workouts on weekdays so we need to exclude weekends
         # integer values corresponding to ISO weekday Sat & Sun.
         weekend = [6,7]
@@ -43,10 +44,13 @@ class Cycle():
             self.add_workout_date(dt.strftime(Cycle.DT_STR_FORMAT))
     #print(workout_dates) 
 
+class Deuce(Cycle):
+  def __init__(self, *args, **kwargs):
+      super(Deuce, self).__init__(*args, **kwargs)
+
 class Tsac(Cycle):
   def __init__(self, *args, **kwargs):
-      super(Sslp, self).__init__(*args, **kwargs)
-
+      super(Tsac, self).__init__(*args, **kwargs)
 
 class Sslp(Cycle):
   # csv to store the SSLP Macro Cycle
@@ -98,7 +102,8 @@ class Sslp(Cycle):
       dfSSLP = dfSSLP.assign(Phase_1_RX_Loads=self.calc_sslp_ph1())
       return dfSSLP
     else:
-        webscrape(gpp.SSLP)
+        wd = WebData(WebData.SSLP, Gpp.TYPES[4]) #SSLP
+        wd.webscrape(self.workout_dates)
         self.load_data_sslp_ph1()
 
 class Workout():
