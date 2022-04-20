@@ -1,6 +1,8 @@
 from datetime import timedelta, date
 import pandas as pd
 from web_data import WebData
+from pdf_data import PdfData
+import json
 
 class Gpp:  
   TYPES = {
@@ -46,18 +48,30 @@ class Cycle():
 
 class Deuce(Cycle):
   def __init__(self, *args, **kwargs):
-      super(Deuce, self).__init__(*args, **kwargs)
+    super(Deuce, self).__init__(*args, **kwargs)
 
 class Tsac(Cycle):
+  MASH = "mash-evolution.pdf" # PDF
+  # Pages of the mash-evolution TSAC macrocycle 
+  PDF_SC_LV_PAGES = [*range(379, 420, 1)]
+  
   def __init__(self, *args, **kwargs):
-      super(Tsac, self).__init__(*args, **kwargs)
+    super(Tsac, self).__init__(*args, **kwargs)
+    self.pdf_data = PdfData(Tsac.MASH, Tsac.PDF_SC_LV_PAGES, self.workout_dates)  
+    self.cylce_wods_json = self.pdf_data.load_pdf_to_json()
+      
 
 class Sslp(Cycle):
   # csv to store the SSLP Macro Cycle
   SSLP_CSV = "sslp.csv"
 
   def __init__(self, *args, **kwargs):
-      super(Sslp, self).__init__(*args, **kwargs)
+    super(Sslp, self).__init__(*args, **kwargs)
+    self.cycle_wods_json = self.generate_workout_rx()
+
+  def generate_workout_rx(self) -> str:
+    return self.load_data_sslp_ph1()
+
 
   # % reference => https://www.t-nation.com/training/know-your-ratios-destroy-weaknesses/
   # Bench Press: 75% of back squat
@@ -97,16 +111,20 @@ class Sslp(Cycle):
     except FileNotFoundError:
       return emptyDF
 
-  def load_data_sslp_ph1(self) -> pd.DataFrame:
+  def load_data_sslp_ph1(self) -> str:
+    json_formatted_str = ''
     dfSSLP = self.load_csv(Sslp.SSLP_CSV)
     if len(dfSSLP.index) != 0:
-      dfSSLP = dfSSLP.assign(Phase_1_RX_Loads=self.calc_sslp_ph1())
-      return dfSSLP
+      dfSSLP = dfSSLP.assign(Phase_RX_Loads=self.calc_sslp_ph1())
+      wods_json_str = dfSSLP.to_json(orient='records')
+      obj_data = json.loads(wods_json_str)
+      json_formatted_str += json.dumps(obj_data, indent=4) 
+      return json_formatted_str
     else:
         wd = WebData(WebData.SSLP, Gpp.TYPES[4]) #SSLP
         wd.webscrape(self.workout_dates)
-        dfSSLP = self.load_data_sslp_ph1()
-        return dfSSLP
+        json_formatted_str = self.load_data_sslp_ph1()
+        return json_formatted_str
 
 class Workout():
   STRENGTH, METCON = range(2)

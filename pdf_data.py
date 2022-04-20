@@ -4,11 +4,8 @@ import pandas as pd
 import json
 
 class PdfData:
-    MASH = "mash-evolution.pdf" # PDF
-    # Pages of the mash-evolution TSAC macrocycle 
-    PDF_SC_LV_PAGES = [*range(379, 420, 1)]
-
-    def __init__(self, pages: list, workout_dates: list):
+    def __init__(self, file_path: str, pages: list, workout_dates: list):
+        self.file_path = file_path
         self.pages = pages
         self.workout_dates = workout_dates
 
@@ -18,11 +15,11 @@ class PdfData:
         s = s.replace('\n', '').replace('\u2019', "'")
         return s  
 
-    # TODO This still needs work
+    # Returns a formatted JSON string from data loaded from PDF
     def load_pdf_to_json(self) -> str: # JSON serialized string object
         json_formatted_str = ''
         # Load the PDF
-        pdf = pdfplumber.open(PdfData.MASH)
+        pdf = pdfplumber.open(self.file_path)
         len_date_list = len(self.workout_dates)
         i = 0
         # Need to loop thru every other page of PDF_SC_LV_PAGES

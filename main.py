@@ -30,11 +30,10 @@ try:
     wd.webscrape(deuce.workout_dates)
   elif gpp.TYPES[gpp.type]  == 'TSAC':
     tsac = Tsac(cycle.start_dt, cycle.end_dt)
-    pdf_data = PdfData(PdfData.PDF_SC_LV_PAGES, tsac.workout_dates)
-    print(pdf_data.load_pdf_to_json())
+    print(tsac.cylce_wods_json)
   elif gpp.TYPES[gpp.type]  == 'SSLP':
     sslp = Sslp(cycle.start_dt, cycle.end_dt)
-    print(sslp.load_data_sslp_ph1())
+    print(sslp.cycle_wods_json)
   else:
     print(gpp.TYPES[gpp.type])
     pass # NOPERATOR do nothing
