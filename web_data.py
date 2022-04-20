@@ -25,7 +25,7 @@ class WebData:
 
     # Replace \n and * in  and \t code with empty string
     def replace_chars(self, s: str) -> str:
-        s = s.replace('\n', '').replace('*', '').replace('\t', '').replace('<p>', '<tr>').replace('</p>', '</tr>')
+        s = s.replace('\n', '').replace('*', '').replace('\t', '')
         return s   
 
     # Pulls data from websites using selenium--SSLP is static tables, DEUCE is dynamic
