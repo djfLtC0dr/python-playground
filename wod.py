@@ -88,7 +88,8 @@ class Sslp(Cycle):
       ph1_rx_dl_loading.append(dl)
     return [ph1_rx_bs_loading, ph1_rx_sp_bp_loading, ph1_rx_dl_loading, 'Phase 2-TBD', 'Phase 2-TBD', 'Phase 2-TBD', 'Phase 3-TBD', 'Phase 3-TBD', 'Phase 3-TBD']
 
-  def load_csv(self, file_path: str) -> pd.DataFrame:
+  @staticmethod
+  def load_csv(file_path: str) -> pd.DataFrame:
     emptyDF = pd.DataFrame()
     try:
       dfSSLP = pd.read_csv(file_path)
@@ -104,7 +105,8 @@ class Sslp(Cycle):
     else:
         wd = WebData(WebData.SSLP, Gpp.TYPES[4]) #SSLP
         wd.webscrape(self.workout_dates)
-        self.load_data_sslp_ph1()
+        dfSSLP = self.load_data_sslp_ph1()
+        return dfSSLP
 
 class Workout():
   STRENGTH, METCON = range(2)

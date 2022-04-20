@@ -13,7 +13,8 @@ class PdfData:
         self.workout_dates = workout_dates
 
     # Replace \n and Unicode right quote 
-    def replace_chars(self, s: str) -> str:
+    @staticmethod
+    def replace_chars(s: str) -> str:
         s = s.replace('\n', '').replace('\u2019', "'")
         return s  
 
