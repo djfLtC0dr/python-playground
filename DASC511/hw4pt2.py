@@ -1,4 +1,4 @@
-from data_util2 import Measurement, UnitOfMeasurement, UnitOfMeasurementProvider
+from data_util2 import Measurement, UnitOfMeasurementProvider
 
 #(1 point) Assign a variable named name a string object with text representing your name.
 name: str = "Dan Fawcett"
