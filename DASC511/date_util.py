@@ -101,7 +101,7 @@ def read_dataset_csv_file(file_path: str) -> list:
 # the list having the correct values, only the proper object types.
 # You should have the test.txt in the same working directory
 
-test_dataset = read_dataset_csv_file("test.txt")
+test_dataset = read_dataset_csv_file("DASC511/test.txt")
 assert len(test_dataset) == 4
 
 assert isinstance(test_dataset[0], tuple)
