@@ -104,19 +104,19 @@ class Sslp(Cycle):
 
   @staticmethod
   def load_csv(file_path: str) -> pd.DataFrame:
-    emptyDF = pd.DataFrame()
+    df_empty = pd.DataFrame()
     try:
-      dfSSLP = pd.read_csv(file_path)
-      return dfSSLP
+      df_sslp = pd.read_csv(file_path)
+      return df_sslp
     except FileNotFoundError:
-      return emptyDF
+      return df_empty
 
   def load_data_sslp_ph1(self) -> str:
     json_formatted_str = ''
-    dfSSLP = self.load_csv(Sslp.SSLP_CSV)
-    if len(dfSSLP.index) != 0:
-      dfSSLP = dfSSLP.assign(Phase_RX_Loads=self.calc_sslp_ph1())
-      wods_json_str = dfSSLP.to_json(orient='records')
+    df_sslp = self.load_csv(Sslp.SSLP_CSV)
+    if len(df_sslp.index) != 0:
+      df_sslp = df_sslp.assign(Phase_RX_Loads=self.calc_sslp_ph1())
+      wods_json_str = df_sslp.to_json(orient='records')
       obj_data = json.loads(wods_json_str)
       json_formatted_str += json.dumps(obj_data, indent=4) 
       return json_formatted_str

@@ -1,4 +1,3 @@
-from operator import indexOf
 import pdfplumber
 import pandas as pd
 import json
