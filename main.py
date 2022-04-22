@@ -1,13 +1,10 @@
 # This is a Workout Of the Day (WOD) app, based on user input, it either pulls data from 
 # a website that requires a user to click on an href tag to load content into the website 
-# or loads data from a local PDF File.
+# or loads data from a local PDF File or loads web/CSV data
 from wod import Cycle, Deuce, Gpp, Sslp, Tsac
 from web_data import WebData
 import traceback
 from datetime import date
-
-# store input keys
-gpp = Gpp(0)
 
 try:
   gpp = Gpp(int(input("Enter the number corresponding to the type of athlete that best describes you:\n1) Functional Fitness;\n2) Garage Gym Warrior;\n3) Tactical;\n4) Novice \n")))
@@ -29,7 +26,7 @@ try:
     sslp = Sslp(cycle.start_dt, cycle.end_dt)
     print(sslp.cycle_wods_json)
   else:
-    print(gpp.TYPES[gpp.type])
+    print("That's a 'No-Rep!' Choose Option 4--Novice--to get a Novice Linear Progression Phase 1 Breakdown based on StartingStrength.com")
     pass # NOPERATOR do nothing
 except: 
   traceback.print_exc()

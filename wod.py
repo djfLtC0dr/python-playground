@@ -13,7 +13,7 @@ class Gpp:
   4 : 'SSLP'
   }
 
-  def __init__(self, type, allowed_types=TYPES):
+  def __init__(self, type=0, allowed_types=TYPES):
     if type not in allowed_types:
             raise ValueError("%s is not a valid type. Please enter a number 1, 2, 3, or 4" % type)
     self.type = type
