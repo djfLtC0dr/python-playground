@@ -3,19 +3,11 @@
 # or loads data from a local PDF File.
 from wod import Cycle, Deuce, Gpp, Sslp, Tsac
 from web_data import WebData
-from pdf_data import PdfData
 import traceback
-import pandas as pd
 from datetime import date
 
-# Start of cycle
-start_dt = date(2021,11,29)
-# End of cycle
-end_dt = date(2021,12,31)
-#end_dt = date(2022,2,25)
 # store input keys
 gpp = Gpp(0)
-cycle = Cycle(start_dt, end_dt)
 
 try:
   gpp = Gpp(int(input("Enter the number corresponding to the type of athlete that best describes you:\n1) Functional Fitness;\n2) Garage Gym Warrior;\n3) Tactical;\n4) Novice \n")))
@@ -23,11 +15,13 @@ except ValueError as e:
   print(str(e))
 
 try:
+  # Cycle dates #end_dt = date(2022,2,25) 
+  start_dt, end_dt = date(2021,11,29), date(2021,12,31)
+  cycle = Cycle(start_dt, end_dt)
   # Obtain type of workout for follow-on processing
   if (gpp.TYPES[gpp.type] == 'GARAGE') or (gpp.TYPES[gpp.type] == 'ATHLETICS'):
-    deuce = Deuce(cycle.start_dt, cycle.end_dt)
-    wd = WebData(WebData.DEUCE, gpp.TYPES[gpp.type])
-    wd.webscrape(deuce.workout_dates)
+    deuce = Deuce(gpp.TYPES[gpp.type], cycle.start_dt, cycle.end_dt)
+    print(deuce.cycle_wods_json)
   elif gpp.TYPES[gpp.type]  == 'TSAC':
     tsac = Tsac(cycle.start_dt, cycle.end_dt)
     print(tsac.cylce_wods_json)
