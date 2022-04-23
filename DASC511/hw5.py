@@ -5,6 +5,17 @@ name: str = "Dan Fawcett"
 
 # Problem 2 (2 points)
 # Create a class and implement it for your problem of interest
+class Deuce():
+  # Constant URL http://www.deucegym.com/community/2021-12-01/
+  DEUCE_URL = "http://www.deucegym.com/community/" # Webscrape
+  
+  def __init__(self, gpp_type, *args, **kwargs):
+    super(Deuce, self).__init__(*args, **kwargs)
+    self._web_data = WebData(Deuce.DEUCE_URL, gpp_type, self.workout_dates)
+    self.cycle_wods_json = self._web_data.cycle_wods_json()
+
+# Problem 3 (2 points)
+# Create another class and implement it for your problem of interest
 from html.parser import HTMLParser
 
 class HTMLTableParser(HTMLParser):
@@ -73,20 +84,61 @@ class HTMLTableParser(HTMLParser):
             self._current_table = []
             self.name = ""
 
-# Problem 3 (2 points)
-# Create another class and implement it for your problem of interest
-
-
 # Problem 4 (2 points)
 # Create another class and implement it for your problem of interest
+class WebData:
+  def __init__(self, url: str, gpp_type: str, workout_dates: list):
+    self.url = url
+    self.gpp_type = gpp_type
+    self.workout_dates = workout_dates
+    self.cycle_wods_json = self.webscrape_data_to_json 
 
+  def webscrape_data_to_json(self) -> str:
+    json_formatted_str = ''
+    driver = webdriver.Chrome(options=chrome_options)
+    # TODO: get this working for singleton the loop it => for wod_date in workout_dates:
+    wod_date = self.workout_dates[0]
+    driver.get(self.url+wod_date)
+    popup_xpath = '/html/body/div[3]/div/img'
+    try:
+        popup = driver.find_element_by_xpath(popup_xpath)
+        if popup.is_displayed:
+          popup.click() # Closes the popup
+    except Exception: #NoSuchElementException:
+      # no popup
+      pass
+    else: 
+      inner_html = '\n\t\t\t<h3>11/29/21 WOD</h3>\n\t\t\t<h2 style="text-align: center;"><b>DEUCE ATHLETICS GPP</b></h2>\n<p><span style="font-weight: 400;">Complete 4 rounds for quality of:</span></p>\n<p><span style="font-weight: 400;">8 Barbell Strict Press </span><span style="font-weight: 400;">(3x1x)<br>\n</span><span style="font-weight: 400;">8 Single Kettlebell Lateral Lunge</span></p>\n<p><span style="font-weight: 400;">Then, AMRAP 12</span></p>\n<p><span style="font-weight: 400;">1,2,3,…,∞<br>\n</span><span style="font-weight: 400;">Front Squat (135/95)<br>\n</span><span style="font-weight: 400;">DB Renegade Row (40/20)</span></p>\n<p><span style="font-weight: 400;">**Every 2 min, 1 7th Street Corner Run</span></p>\n<h2 style="text-align: center;"><b>DEUCE GARAGE GPP</b></h2>\n<p><span style="font-weight: 400;">5-5-5-5-5<br>\n</span><span style="font-weight: 400;">Pendlay Row</span></p>\n<p><span style="font-weight: 400;">Then, complete 3 rounds for quality of:</span></p>\n<p><span style="font-weight: 400;">10 Single Arm Bent Over row (ea)<br>\n</span><span style="font-weight: 400;">10-12 Parralette Push Ups<br>\n</span><span style="font-weight: 400;">10 Hollow Body Lat Pulls&nbsp;</span></p>\n<p><span style="font-weight: 400;">Then, AMRAP8</span></p>\n<p><span style="font-weight: 400;">6 Chest to Bar Pull Ups<br>\n</span><span style="font-weight: 400;">8 HSPU<br>\n</span><span style="font-weight: 400;">48 Double unders</span></p>\n\t\t'
+      inner_html = self.replace_chars(inner_html)
+      df_wod = pd.read_html('<table>' + inner_html + '</table>')
+      print(df_wod)
+      wod_link_xpath = '/html/body/div[1]/main/center/article/div/p/a'
+      wod_link = driver.find_element_by_xpath(wod_link_xpath)
+      ActionChains(driver).move_to_element(wod_link).click(wod_link).perform()
+      wod_element = WebDriverWait(driver, 10).until(
+          EC.presence_of_element_located((By.CLASS_NAME, "wod_block"))
+      )
+      wod_innerHTML = wod_element.get_attribute('innerHTML')
+      df_wod = pd.read_html("<table>" + wod_innerHTML + "</table>")
+      wod_json_str = df_wod.to_json(orient='records')
+      obj_data = json.loads(wod_json_str)
+      json_formatted_str += json.dumps(obj_data, indent=4) 
+    finally:
+      driver.quit()  
+      return json_formatted_str      
 
 # If you need to, you can create any additional classes or functions here as well.
-def url_get_contents(url):
+def url_get_contents(url) -> urllib.request._UrlopenRet:
     """ Opens a website and read its binary contents (HTTP Response Body) """
     req = urllib.request.Request(url=url)
     f = urllib.request.urlopen(req)
     return f.read()
+
+# Replace \n and * in  and \t code with empty string
+@staticmethod
+def replace_chars(s: str) -> str:
+    s = s.replace('\n', '').replace('*', '').replace('\t', '')
+    return s  
 
 # Problem 5 (2 points)
 # Assign a variable named 'obj_1' an example instance of one of your classes
