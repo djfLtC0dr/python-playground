@@ -1,5 +1,6 @@
 import urllib.request
 import pprint
+import re
 
 # Problem 1 (2 points)
 # Assign the 'name' variable an object that is your name of type str.
@@ -14,7 +15,27 @@ class Deuce():
   def __init__(self, gpp_type='GARAGE', workout_dates=['2021-12-01', '2021-12-02']):
     self.gpp_type = gpp_type
     self.workout_dates = workout_dates
+    self.wod_urls = []
+    self.get_wod_url()
     #self.cycle_wods_json = self._web_data.cycle_wods_json()
+
+  def add_wod_url(self, a_href: str):
+    self.wod_urls.append(a_href)
+
+  def get_wod_url(self) -> None:
+    # TODO: get this working for singleton the loop it => for wod_date in workout_dates:
+    wod_date = self.workout_dates[0]
+    wod_url_base = Deuce.DEUCE_URL + wod_date
+    xhtml = url_get_contents(Deuce.DEUCE_URL + wod_date).decode('utf-8')
+    list_wod_links = re.findall("href=[\"\'](.*?)[\"\']", xhtml)
+    wod_url = ''
+    for url in list_wod_links:
+        if wod_url_base in url:
+          wod_url = url
+          break
+    print("wod_url => ", wod_url)
+    #a_href =  url_get_contents(wod_url[0]).decode('utf-8')
+    self.add_wod_url(wod_url)
 
 # Problem 3 (2 points)
 # Create another class and implement it for your problem of interest
@@ -91,17 +112,17 @@ class HTMLElementParser(HTMLParser):
 # Problem 4 (2 points)
 # Create another class and implement it for your problem of interest
 class WebData:
-  def __init__(self, url: str, gpp_type: str, workout_dates: list):
+  def __init__(self, url: str = ''):
     self.url = url
-    self.gpp_type = gpp_type
-    self.workout_dates = workout_dates
-    self.html_data = self.webscrape_html_data()
+    self.html_data = self.webscrape_html_data(self.url)
 
-  def webscrape_html_data(self) -> str:
-    json_formatted_str = ''
-    # TODO: get this working for singleton the loop it => for wod_date in workout_dates:
-    wod_date = self.workout_dates[0]
-    xhtml = url_get_contents(self.url + wod_date).decode('utf-8')
+
+  def webscrape_html_data(self, url) -> str:
+    """ Scrape the landing page for the day, then  pull out all the href tags
+    re-scrape for the actual wod embedded in the linkable article w/in 
+    <div class="entry-summary>
+    """
+    xhtml = url_get_contents(url).decode('utf-8')
     return xhtml 
 
 # If you need to, you can create any additional classes or functions here as well.
@@ -120,6 +141,13 @@ def replace_chars(s: str) -> str:
     s = s.replace('\n', '').replace('*', '').replace('\t', '')
     return s  
 
+def get_div_wod_block(html_data: str) -> str:
+    wod_block_regex_str = '(<div class="wod_block">.*?</div>)'
+    regexHandler = re.compile(wod_block_regex_str)
+    result = regexHandler.search(html_data)
+    matchedText = result.groups()[0]
+    return matchedText
+
 # Problem 5 (2 points)
 # Assign a variable named 'obj_1' an example instance of one of your classes
 obj_1 = Deuce()    
@@ -127,14 +155,14 @@ obj_1 = Deuce()
 # Problem 6 (2 points)
 #  Assign a variable named 'obj_2' an example instance of another one of your
 #  classes
-obj_2 = WebData(obj_1.DEUCE_URL, obj_1.gpp_type, obj_1.workout_dates)
-print(obj_2.html_data)
-
+obj_2 = WebData(obj_1.wod_urls[0])
+#print(obj_2.html_data)
+get_div_wod_block(obj_2.html_data)
 # Problem 7 (2 points)
 #  Assign a variable named 'obj_3' an example instance of one of your classes
 #  that extends another class
 obj_3 = HTMLElementParser()
-obj_3.feed(obj_2.html_data)
+obj_3.feed(get_div_wod_block(obj_2.html_data))
     
 # Get all tables
 pprint(obj_3.tables)
