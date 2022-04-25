@@ -1,3 +1,5 @@
+import urllib.request
+import pprint
 
 # Problem 1 (2 points)
 # Assign the 'name' variable an object that is your name of type str.
@@ -9,16 +11,16 @@ class Deuce():
   # Constant URL http://www.deucegym.com/community/2021-12-01/
   DEUCE_URL = "http://www.deucegym.com/community/" # Webscrape
   
-  def __init__(self, gpp_type, *args, **kwargs):
-    super(Deuce, self).__init__(*args, **kwargs)
-    self._web_data = WebData(Deuce.DEUCE_URL, gpp_type, self.workout_dates)
-    self.cycle_wods_json = self._web_data.cycle_wods_json()
+  def __init__(self, gpp_type='GARAGE', workout_dates=['2021-12-01', '2021-12-02']):
+    self.gpp_type = gpp_type
+    self.workout_dates = workout_dates
+    #self.cycle_wods_json = self._web_data.cycle_wods_json()
 
 # Problem 3 (2 points)
 # Create another class and implement it for your problem of interest
 from html.parser import HTMLParser
 
-class HTMLTableParser(HTMLParser):
+class HTMLElementParser(HTMLParser):
     """ This class serves as a html table parser. It is able to parse multiple
     tables which you feed in. You can access the result per .tables field.
     """
@@ -84,6 +86,8 @@ class HTMLTableParser(HTMLParser):
             self._current_table = []
             self.name = ""
 
+
+
 # Problem 4 (2 points)
 # Create another class and implement it for your problem of interest
 class WebData:
@@ -91,46 +95,22 @@ class WebData:
     self.url = url
     self.gpp_type = gpp_type
     self.workout_dates = workout_dates
-    self.cycle_wods_json = self.webscrape_data_to_json 
+    self.html_data = self.webscrape_html_data()
 
-  def webscrape_data_to_json(self) -> str:
+  def webscrape_html_data(self) -> str:
     json_formatted_str = ''
-    driver = webdriver.Chrome(options=chrome_options)
     # TODO: get this working for singleton the loop it => for wod_date in workout_dates:
     wod_date = self.workout_dates[0]
-    driver.get(self.url+wod_date)
-    popup_xpath = '/html/body/div[3]/div/img'
-    try:
-        popup = driver.find_element_by_xpath(popup_xpath)
-        if popup.is_displayed:
-          popup.click() # Closes the popup
-    except Exception: #NoSuchElementException:
-      # no popup
-      pass
-    else: 
-      inner_html = '\n\t\t\t<h3>11/29/21 WOD</h3>\n\t\t\t<h2 style="text-align: center;"><b>DEUCE ATHLETICS GPP</b></h2>\n<p><span style="font-weight: 400;">Complete 4 rounds for quality of:</span></p>\n<p><span style="font-weight: 400;">8 Barbell Strict Press </span><span style="font-weight: 400;">(3x1x)<br>\n</span><span style="font-weight: 400;">8 Single Kettlebell Lateral Lunge</span></p>\n<p><span style="font-weight: 400;">Then, AMRAP 12</span></p>\n<p><span style="font-weight: 400;">1,2,3,…,∞<br>\n</span><span style="font-weight: 400;">Front Squat (135/95)<br>\n</span><span style="font-weight: 400;">DB Renegade Row (40/20)</span></p>\n<p><span style="font-weight: 400;">**Every 2 min, 1 7th Street Corner Run</span></p>\n<h2 style="text-align: center;"><b>DEUCE GARAGE GPP</b></h2>\n<p><span style="font-weight: 400;">5-5-5-5-5<br>\n</span><span style="font-weight: 400;">Pendlay Row</span></p>\n<p><span style="font-weight: 400;">Then, complete 3 rounds for quality of:</span></p>\n<p><span style="font-weight: 400;">10 Single Arm Bent Over row (ea)<br>\n</span><span style="font-weight: 400;">10-12 Parralette Push Ups<br>\n</span><span style="font-weight: 400;">10 Hollow Body Lat Pulls&nbsp;</span></p>\n<p><span style="font-weight: 400;">Then, AMRAP8</span></p>\n<p><span style="font-weight: 400;">6 Chest to Bar Pull Ups<br>\n</span><span style="font-weight: 400;">8 HSPU<br>\n</span><span style="font-weight: 400;">48 Double unders</span></p>\n\t\t'
-      inner_html = self.replace_chars(inner_html)
-      df_wod = pd.read_html('<table>' + inner_html + '</table>')
-      print(df_wod)
-      wod_link_xpath = '/html/body/div[1]/main/center/article/div/p/a'
-      wod_link = driver.find_element_by_xpath(wod_link_xpath)
-      ActionChains(driver).move_to_element(wod_link).click(wod_link).perform()
-      wod_element = WebDriverWait(driver, 10).until(
-          EC.presence_of_element_located((By.CLASS_NAME, "wod_block"))
-      )
-      wod_innerHTML = wod_element.get_attribute('innerHTML')
-      df_wod = pd.read_html("<table>" + wod_innerHTML + "</table>")
-      wod_json_str = df_wod.to_json(orient='records')
-      obj_data = json.loads(wod_json_str)
-      json_formatted_str += json.dumps(obj_data, indent=4) 
-    finally:
-      driver.quit()  
-      return json_formatted_str      
+    xhtml = url_get_contents(self.url + wod_date).decode('utf-8')
+    return xhtml 
 
 # If you need to, you can create any additional classes or functions here as well.
-def url_get_contents(url) -> urllib.request._UrlopenRet:
-    """ Opens a website and read its binary contents (HTTP Response Body) """
-    req = urllib.request.Request(url=url)
+def url_get_contents(url):
+    """ Opens a website and read its binary contents (HTTP Response Body) """   
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.88 Safari/537.36", 
+        }
+    req = urllib.request.Request(url=url, headers=headers)
     f = urllib.request.urlopen(req)
     return f.read()
 
@@ -142,35 +122,25 @@ def replace_chars(s: str) -> str:
 
 # Problem 5 (2 points)
 # Assign a variable named 'obj_1' an example instance of one of your classes
-import urllib.request
-import pprint
-
-def main():
-    url = 'https://w3schools.com/html/html_tables.asp'
-    xhtml = url_get_contents(url).decode('utf-8')
-
-    p = HTMLTableParser()
-    p.feed(xhtml)
-
-    # Get all tables
-    pprint(p.tables)
-
-    # Get tables with id attribute
-    pprint(p.named_tables)
-
-
-if __name__ == '__main__':
-    main()
-
+obj_1 = Deuce()    
+    
 # Problem 6 (2 points)
 #  Assign a variable named 'obj_2' an example instance of another one of your
 #  classes
-
+obj_2 = WebData(obj_1.DEUCE_URL, obj_1.gpp_type, obj_1.workout_dates)
+print(obj_2.html_data)
 
 # Problem 7 (2 points)
 #  Assign a variable named 'obj_3' an example instance of one of your classes
 #  that extends another class
+obj_3 = HTMLElementParser()
+obj_3.feed(obj_2.html_data)
+    
+# Get all tables
+pprint(obj_3.tables)
 
+# Get tables with id attribute
+pprint(obj_3.named_tables)
 
 # Problems 8 through 14 are worth 4 points each.
 #    For each problem you must implement a test method in the following
