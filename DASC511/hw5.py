@@ -2,8 +2,6 @@ import urllib.request
 from urllib.request import urlopen
 import re
 
-import urllib.response  
-
 # Problem 1 (2 points)
 # Assign the 'name' variable an object that is your name of type str.
 name: str = "Dan Fawcett"
