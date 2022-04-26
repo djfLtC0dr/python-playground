@@ -1,5 +1,8 @@
 import urllib.request
+from urllib.request import urlopen
 import re
+
+import urllib.response  
 
 # Problem 1 (2 points)
 # Assign the 'name' variable an object that is your name of type str.
@@ -11,7 +14,7 @@ class Deuce():
   # Constant URL http://www.deucegym.com/community/2021-12-01/
   DEUCE_URL = "http://www.deucegym.com/community/" # Webscrape
   
-  def __init__(self, gpp_type='GARAGE', workout_dates=['2021-12-01', '2021-12-02']):
+  def __init__(self, gpp_type='DEUCE ATHLETICS GPP', workout_dates=['2021-12-01', '2021-12-02']):
     self.gpp_type = gpp_type
     self.workout_dates = workout_dates
     self.wod_urls = []
@@ -25,7 +28,8 @@ class Deuce():
     # TODO: get this working for singleton the loop it => for wod_date in workout_dates:
     wod_date = self.workout_dates[0]
     wod_url_base = Deuce.DEUCE_URL + wod_date
-    xhtml = url_get_contents(Deuce.DEUCE_URL + wod_date).decode('utf-8')
+    wd = WebData(wod_url_base)
+    xhtml = wd.html_data
     list_wod_links = re.findall("href=[\"\'](.*?)[\"\']", xhtml)
     wod_url = ''
     for url in list_wod_links:
@@ -38,16 +42,34 @@ class Deuce():
 
 # Problem 3 (2 points)
 # Create another class and implement it for your problem of interest
+class WebData:
+    def __init__(self, url: str = ''):
+        self.url = url
+        self.html_data = self.webscrape_html_data(self.url)
+
+    def webscrape_html_data(self, url) -> str:
+        """ Opens a website and read its binary contents (HTTP Response Body)"""   
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.88 Safari/537.36", 
+            "Content-type": "application/json; charset=utf-8",
+            "Accept": "application/json",
+            }
+        req = urllib.request.Request(url=url, headers=headers)
+        with urlopen(req) as response:
+            response_content = replace_chars(response.read().decode('utf-8'))
+        return response_content
+
+# Problem 4 (2 points)
+# Create another class and implement it for your problem of interest
 from html.parser import HTMLParser
 
-class HTMLElementParser(HTMLParser):
-    """ This class serves as a html table parser. It is able to parse multiple
-    tables which you feed in. You can access the result per .tables field.
+class HTMLDeuceParser(HTMLParser):
+    """ This class serves as a html Deuce GPP parser. It is able to parse div
+    tags containing class="wod_block" which you feed in. You can access the result per .wod_data field.
     """
     def __init__(self):
-        self.data_separator=' ',
         self.recording = False,
-        self.data = []
+        self.wod_data = []
         #self.convert_charrefs = False
         # initialize the base class
         HTMLParser.__init__(self)
@@ -69,93 +91,12 @@ class HTMLElementParser(HTMLParser):
 
     def handle_data(self, data):
         if self.recording == True:
-            self.data.append(data)
-
-"""         self._data_separator = data_separator
-
-        self._in_td = False
-        self._in_th = False
-        self._current_table = []
-        self._current_row = []
-        self._current_cell = []
-        self.tables = []
-        self.named_tables = {}
-        self.name = ""
-
-    def handle_starttag(self, tag, attrs):
-        #We need to remember the opening point for the content of interest.
-        #The other tags (<div>, <p>) are only handled at the closing point.
-        
-        if tag == "div":
-            name = [a[1] for a in attrs if a[0] == "id"]
-            if len(name) > 0:
-                self.name = name[0]
-        if tag == 'td':
-            self._in_td = True
-        if tag == 'th':
-            self._in_th = True
-
-    def handle_data(self, data):
-        #This is where we save content to a cell
-        if self._in_td or self._in_th:
-            self._current_cell.append(data.strip())
-    
-    def handle_endtag(self, tag):
-        #Here we exit the tags. If the closing tag is </tr>, we know that we
-        can save our currently parsed cells to the current table as a row and
-        prepare for a new row. If the closing tag is </table>, we save the
-        current table and prepare for a new one.
-        
-        if tag == 'td':
-            self._in_td = False
-        elif tag == 'th':
-            self._in_th = False
-
-        if tag in ['td', 'th']:
-            final_cell = self._data_separator.join(self._current_cell).strip()
-            self._current_row.append(final_cell)
-            self._current_cell = []
-        elif tag == 'tr':
-            self._current_table.append(self._current_row)
-            self._current_row = []
-        elif tag == 'table':
-            self.tables.append(self._current_table)
-            if len(self.name) > 0:
-                self.named_tables[self.name] = self._current_table
-            self._current_table = []
-            self.name = "" """
-
-
-
-# Problem 4 (2 points)
-# Create another class and implement it for your problem of interest
-class WebData:
-  def __init__(self, url: str = ''):
-    self.url = url
-    self.html_data = self.webscrape_html_data(self.url)
-
-
-  def webscrape_html_data(self, url) -> str:
-    """ Scrape the landing page for the day, then  pull out all the href tags
-    re-scrape for the actual wod embedded in the linkable article w/in 
-    <div class="entry-summary>
-    """
-    xhtml = url_get_contents(url).decode('utf-8')
-    return replace_chars(xhtml)
+            self.wod_data.append(data)
 
 # If you need to, you can create any additional classes or functions here as well.
-def url_get_contents(url):
-    """ Opens a website and read its binary contents (HTTP Response Body) """   
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.88 Safari/537.36", 
-        }
-    req = urllib.request.Request(url=url, headers=headers)
-    f = urllib.request.urlopen(req)
-    return f.read()
-
-# Replace \n and \t code with empty string
+# Replace \n and \t and \r embedded \0 strings with empty string
 def replace_chars(s: str) -> str:
-    s = s.replace('\n', '').replace('\t', '')
+    s = s.replace('\n', '').replace('\t', '').replace('\r', '').replace('\0', '')
     return s  
 
 # Problem 5 (2 points)
@@ -170,9 +111,9 @@ obj_2 = WebData(obj_1.wod_urls[0])
 # Problem 7 (2 points)
 #  Assign a variable named 'obj_3' an example instance of one of your classes
 #  that extends another class
-obj_3 = HTMLElementParser()
+obj_3 = HTMLDeuceParser()
 obj_3.feed(obj_2.html_data)
-print(obj_3.data)
+#print(obj_3.wod_data)
 obj_3.close()
     
 # Get all tables
@@ -200,25 +141,60 @@ class MyTestCases(unittest.TestCase):
 
     # Problem 8
     # add test case method
+    def test_deuce_url_exists(self) -> bool:
+        deuce1 = Deuce('DEUCE GARAGE GPP', ['2021-12-03'])
+        self.assertTrue(len(deuce1.wod_urls) > 0)
 
     # Problem 9
     # add test case method
+    def test_deuce_url_is_type_str(self) -> bool:
+        deuce2 = Deuce('DEUCE GARAGE GPP', ['2021-12-03'])
+        self.assertTrue(isinstance(deuce2.wod_urls[0], str))
 
     # Problem 10
     # add test case method
-    
+    def test_web_data_exists(self) -> bool:
+        deuce3 = Deuce('DEUCE GARAGE GPP', ['2021-12-03'])
+        wd1 = WebData(deuce3.wod_urls[0])
+        self.assertTrue(len(wd1.html_data) > 0)
+
     # Problem 11
     # add test case method
+    def test_div_wodblock_exists(self) -> bool:
+        deuce4 = Deuce('DEUCE GARAGE GPP', ['2021-12-03'])
+        wd2 = WebData(deuce4.wod_urls[0])
+        regexp = re.compile(r'div class="wod_block"')
+        self.assertTrue(bool(re.search(regexp, wd2.html_data)))
 
     # Problem 12
     # add test case method
+    def test_div_wodblock__athletics__gpp_parsed(self) -> bool:
+        deuce5 = Deuce('DEUCE ATHLETICS GPP', ['2021-12-03'])
+        wd3 = WebData(deuce5.wod_urls[0])
+        hdp1 = HTMLDeuceParser()
+        hdp1.feed(wd3.html_data)
+        test_data = hdp1.wod_data
+        self.assertTrue(deuce5.gpp_type in test_data)  
 
     # Problem 13
     # add test case method
+    def test_div_wodblock_garage_gpp_parsed(self) -> bool:
+        deuce6 = Deuce('DEUCE GARAGE GPP', ['2021-12-03'])
+        wd4 = WebData(deuce6.wod_urls[0])
+        hdp2 = HTMLDeuceParser()
+        hdp2.feed(wd4.html_data)
+        test_data = hdp2.wod_data
+        self.assertTrue(deuce6.gpp_type in test_data)   
 
     # Problem 14
     # add test case method
-
+    def test_div_all_wod_elements_parsed(self) -> bool:
+        deuce7 = Deuce('DEUCE GARAGE GPP', ['2021-12-03'])
+        wd5 = WebData(deuce7.wod_urls[0])
+        hdp3 = HTMLDeuceParser()
+        hdp3.feed(wd5.html_data)
+        test_data = hdp3.wod_data
+        self.assertEqual(20, len(test_data))  
     ##################################################
     #DO NOT MODIFY any of these test case methods
     ##################################################
