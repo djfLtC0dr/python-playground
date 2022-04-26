@@ -11,6 +11,7 @@ name: str = "Dan Fawcett"
 # Problem 2 (2 points)
 # Create a class and implement it for your problem of interest
 class Deuce():
+  """ This class serves as a storage mechanism for list of urls"""  
   # Constant URL http://www.deucegym.com/community/2021-12-01/
   DEUCE_URL = "http://www.deucegym.com/community/" # Webscrape
   
@@ -25,7 +26,7 @@ class Deuce():
     self.wod_urls.append(a_href)
 
   def get_wod_url(self) -> None:
-    # TODO: get this working for singleton the loop it => for wod_date in workout_dates:
+    # TODO: get this working for singleton then loop it => for wod_date in workout_dates:
     wod_date = self.workout_dates[0]
     wod_url_base = Deuce.DEUCE_URL + wod_date
     wd = WebData(wod_url_base)
@@ -43,6 +44,7 @@ class Deuce():
 # Problem 3 (2 points)
 # Create another class and implement it for your problem of interest
 class WebData:
+    """ This class serves as a storage mechanism for an HTTPResponse object data decoded to utf-8 string"""    
     def __init__(self, url: str = ''):
         self.url = url
         self.html_data = self.webscrape_html_data(self.url)
@@ -64,7 +66,7 @@ class WebData:
 from html.parser import HTMLParser
 
 class HTMLDeuceParser(HTMLParser):
-    """ This class serves as a html Deuce GPP parser. It is able to parse div
+    """ This class serves as a html Deuce GPP parser. It extends HTMLParser and is able to parse div
     tags containing class="wod_block" which you feed in. You can access the result per .wod_data field.
     """
     def __init__(self):
@@ -116,12 +118,6 @@ obj_3.feed(obj_2.html_data)
 #print(obj_3.wod_data)
 obj_3.close()
     
-# Get all tables
-#pprint(obj_3.tables)
-
-# Get tables with id attribute
-#pprint(obj_3.named_tables)
-
 # Problems 8 through 14 are worth 4 points each.
 #    For each problem you must implement a test method in the following
 #     TestCase class. Each method name should be unique and start with 'test_'.
