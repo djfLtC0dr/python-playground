@@ -93,6 +93,12 @@ class WebData:
     self.workout_dates = workout_dates
     self.cycle_wods_json = self.webscrape_data_to_json 
 
+  def url_get_contents(url) -> urllib.request._UrlopenRet:
+    """ Opens a website and read its binary contents (HTTP Response Body) """
+    req = urllib.request.Request(url=url)
+    f = urllib.request.urlopen(req)
+    return f.read()
+  
   def webscrape_data_to_json(self) -> str:
     json_formatted_str = ''
     driver = webdriver.Chrome(options=chrome_options)
@@ -128,11 +134,6 @@ class WebData:
       return json_formatted_str      
 
 # If you need to, you can create any additional classes or functions here as well.
-def url_get_contents(url) -> urllib.request._UrlopenRet:
-    """ Opens a website and read its binary contents (HTTP Response Body) """
-    req = urllib.request.Request(url=url)
-    f = urllib.request.urlopen(req)
-    return f.read()
 
 # Replace \n and * in  and \t code with empty string
 @staticmethod
