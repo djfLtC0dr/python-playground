@@ -1,5 +1,4 @@
 import urllib.request
-import pprint
 import re
 
 # Problem 1 (2 points)
@@ -33,7 +32,7 @@ class Deuce():
         if wod_url_base in url:
           wod_url = url
           break
-    print("wod_url => ", wod_url)
+    #print("wod_url => ", wod_url)
     #a_href =  url_get_contents(wod_url[0]).decode('utf-8')
     self.add_wod_url(wod_url)
 
@@ -45,15 +44,34 @@ class HTMLElementParser(HTMLParser):
     """ This class serves as a html table parser. It is able to parse multiple
     tables which you feed in. You can access the result per .tables field.
     """
-    def __init__(
-        self,
-        decode_html_entities=False,
-        data_separator=' ',
-    ):
+    def __init__(self):
+        self.data_separator=' ',
+        self.recording = False,
+        self.data = []
+        #self.convert_charrefs = False
+        # initialize the base class
+        HTMLParser.__init__(self)
 
-        HTMLParser.__init__(self, convert_charrefs=decode_html_entities)
+    def handle_starttag(self, tag, attrs):      
+        if tag == 'div':
+            for name, value in attrs:
+                if name == 'class' and value == 'wod_block':
+                    #print(value)
+                    #print("Encountered the beginning of a %s tag" % tag)
+                    self.recording = True 
+        else:
+            return
 
-        self._data_separator = data_separator
+    def handle_endtag(self, tag):
+        if tag == 'div' and self.recording == True:
+            self.recording = False 
+            #print("Encountered the end of a %s tag" % tag)
+
+    def handle_data(self, data):
+        if self.recording == True:
+            self.data.append(data)
+
+"""         self._data_separator = data_separator
 
         self._in_td = False
         self._in_th = False
@@ -65,10 +83,10 @@ class HTMLElementParser(HTMLParser):
         self.name = ""
 
     def handle_starttag(self, tag, attrs):
-        """ We need to remember the opening point for the content of interest.
-        The other tags (<table>, <tr>) are only handled at the closing point.
-        """
-        if tag == "table":
+        #We need to remember the opening point for the content of interest.
+        #The other tags (<div>, <p>) are only handled at the closing point.
+        
+        if tag == "div":
             name = [a[1] for a in attrs if a[0] == "id"]
             if len(name) > 0:
                 self.name = name[0]
@@ -78,16 +96,16 @@ class HTMLElementParser(HTMLParser):
             self._in_th = True
 
     def handle_data(self, data):
-        """ This is where we save content to a cell """
+        #This is where we save content to a cell
         if self._in_td or self._in_th:
             self._current_cell.append(data.strip())
     
     def handle_endtag(self, tag):
-        """ Here we exit the tags. If the closing tag is </tr>, we know that we
+        #Here we exit the tags. If the closing tag is </tr>, we know that we
         can save our currently parsed cells to the current table as a row and
         prepare for a new row. If the closing tag is </table>, we save the
         current table and prepare for a new one.
-        """
+        
         if tag == 'td':
             self._in_td = False
         elif tag == 'th':
@@ -105,7 +123,7 @@ class HTMLElementParser(HTMLParser):
             if len(self.name) > 0:
                 self.named_tables[self.name] = self._current_table
             self._current_table = []
-            self.name = ""
+            self.name = "" """
 
 
 
@@ -123,7 +141,7 @@ class WebData:
     <div class="entry-summary>
     """
     xhtml = url_get_contents(url).decode('utf-8')
-    return xhtml 
+    return replace_chars(xhtml)
 
 # If you need to, you can create any additional classes or functions here as well.
 def url_get_contents(url):
@@ -135,18 +153,10 @@ def url_get_contents(url):
     f = urllib.request.urlopen(req)
     return f.read()
 
-# Replace \n and * in  and \t code with empty string
-@staticmethod
+# Replace \n and \t code with empty string
 def replace_chars(s: str) -> str:
-    s = s.replace('\n', '').replace('*', '').replace('\t', '')
+    s = s.replace('\n', '').replace('\t', '')
     return s  
-
-def get_div_wod_block(html_data: str) -> str:
-    wod_block_regex_str = '(<div class="wod_block">.*?</div>)'
-    regexHandler = re.compile(wod_block_regex_str)
-    result = regexHandler.search(html_data)
-    matchedText = result.groups()[0]
-    return matchedText
 
 # Problem 5 (2 points)
 # Assign a variable named 'obj_1' an example instance of one of your classes
@@ -156,19 +166,20 @@ obj_1 = Deuce()
 #  Assign a variable named 'obj_2' an example instance of another one of your
 #  classes
 obj_2 = WebData(obj_1.wod_urls[0])
-#print(obj_2.html_data)
-get_div_wod_block(obj_2.html_data)
+
 # Problem 7 (2 points)
 #  Assign a variable named 'obj_3' an example instance of one of your classes
 #  that extends another class
 obj_3 = HTMLElementParser()
-obj_3.feed(get_div_wod_block(obj_2.html_data))
+obj_3.feed(obj_2.html_data)
+print(obj_3.data)
+obj_3.close()
     
 # Get all tables
-pprint(obj_3.tables)
+#pprint(obj_3.tables)
 
 # Get tables with id attribute
-pprint(obj_3.named_tables)
+#pprint(obj_3.named_tables)
 
 # Problems 8 through 14 are worth 4 points each.
 #    For each problem you must implement a test method in the following
