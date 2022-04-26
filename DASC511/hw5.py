@@ -1,3 +1,5 @@
+import urllib.request
+import re
 
 # Problem 1 (2 points)
 # Assign the 'name' variable an object that is your name of type str.
@@ -9,28 +11,67 @@ class Deuce():
   # Constant URL http://www.deucegym.com/community/2021-12-01/
   DEUCE_URL = "http://www.deucegym.com/community/" # Webscrape
   
-  def __init__(self, gpp_type, *args, **kwargs):
-    super(Deuce, self).__init__(*args, **kwargs)
-    self._web_data = WebData(Deuce.DEUCE_URL, gpp_type, self.workout_dates)
-    self.cycle_wods_json = self._web_data.cycle_wods_json()
+  def __init__(self, gpp_type='GARAGE', workout_dates=['2021-12-01', '2021-12-02']):
+    self.gpp_type = gpp_type
+    self.workout_dates = workout_dates
+    self.wod_urls = []
+    self.get_wod_url()
+    #self.cycle_wods_json = self._web_data.cycle_wods_json()
+
+  def add_wod_url(self, a_href: str):
+    self.wod_urls.append(a_href)
+
+  def get_wod_url(self) -> None:
+    # TODO: get this working for singleton the loop it => for wod_date in workout_dates:
+    wod_date = self.workout_dates[0]
+    wod_url_base = Deuce.DEUCE_URL + wod_date
+    xhtml = url_get_contents(Deuce.DEUCE_URL + wod_date).decode('utf-8')
+    list_wod_links = re.findall("href=[\"\'](.*?)[\"\']", xhtml)
+    wod_url = ''
+    for url in list_wod_links:
+        if wod_url_base in url:
+          wod_url = url
+          break
+    #print("wod_url => ", wod_url)
+    #a_href =  url_get_contents(wod_url[0]).decode('utf-8')
+    self.add_wod_url(wod_url)
 
 # Problem 3 (2 points)
 # Create another class and implement it for your problem of interest
 from html.parser import HTMLParser
 
-class HTMLTableParser(HTMLParser):
+class HTMLElementParser(HTMLParser):
     """ This class serves as a html table parser. It is able to parse multiple
     tables which you feed in. You can access the result per .tables field.
     """
-    def __init__(
-        self,
-        decode_html_entities=False,
-        data_separator=' ',
-    ):
+    def __init__(self):
+        self.data_separator=' ',
+        self.recording = False,
+        self.data = []
+        #self.convert_charrefs = False
+        # initialize the base class
+        HTMLParser.__init__(self)
 
-        HTMLParser.__init__(self, convert_charrefs=decode_html_entities)
+    def handle_starttag(self, tag, attrs):      
+        if tag == 'div':
+            for name, value in attrs:
+                if name == 'class' and value == 'wod_block':
+                    #print(value)
+                    #print("Encountered the beginning of a %s tag" % tag)
+                    self.recording = True 
+        else:
+            return
 
-        self._data_separator = data_separator
+    def handle_endtag(self, tag):
+        if tag == 'div' and self.recording == True:
+            self.recording = False 
+            #print("Encountered the end of a %s tag" % tag)
+
+    def handle_data(self, data):
+        if self.recording == True:
+            self.data.append(data)
+
+"""         self._data_separator = data_separator
 
         self._in_td = False
         self._in_th = False
@@ -42,10 +83,10 @@ class HTMLTableParser(HTMLParser):
         self.name = ""
 
     def handle_starttag(self, tag, attrs):
-        """ We need to remember the opening point for the content of interest.
-        The other tags (<table>, <tr>) are only handled at the closing point.
-        """
-        if tag == "table":
+        #We need to remember the opening point for the content of interest.
+        #The other tags (<div>, <p>) are only handled at the closing point.
+        
+        if tag == "div":
             name = [a[1] for a in attrs if a[0] == "id"]
             if len(name) > 0:
                 self.name = name[0]
@@ -55,16 +96,16 @@ class HTMLTableParser(HTMLParser):
             self._in_th = True
 
     def handle_data(self, data):
-        """ This is where we save content to a cell """
+        #This is where we save content to a cell
         if self._in_td or self._in_th:
             self._current_cell.append(data.strip())
     
     def handle_endtag(self, tag):
-        """ Here we exit the tags. If the closing tag is </tr>, we know that we
+        #Here we exit the tags. If the closing tag is </tr>, we know that we
         can save our currently parsed cells to the current table as a row and
         prepare for a new row. If the closing tag is </table>, we save the
         current table and prepare for a new one.
-        """
+        
         if tag == 'td':
             self._in_td = False
         elif tag == 'th':
@@ -82,96 +123,63 @@ class HTMLTableParser(HTMLParser):
             if len(self.name) > 0:
                 self.named_tables[self.name] = self._current_table
             self._current_table = []
-            self.name = ""
+            self.name = "" """
+
+
 
 # Problem 4 (2 points)
 # Create another class and implement it for your problem of interest
 class WebData:
-  def __init__(self, url: str, gpp_type: str, workout_dates: list):
+  def __init__(self, url: str = ''):
     self.url = url
-    self.gpp_type = gpp_type
-    self.workout_dates = workout_dates
-    self.cycle_wods_json = self.webscrape_data_to_json 
+    self.html_data = self.webscrape_html_data(self.url)
 
-  def url_get_contents(url) -> urllib.request._UrlopenRet:
-    """ Opens a website and read its binary contents (HTTP Response Body) """
-    req = urllib.request.Request(url=url)
-    f = urllib.request.urlopen(req)
-    return f.read()
-  
-  def webscrape_data_to_json(self) -> str:
-    json_formatted_str = ''
-    driver = webdriver.Chrome(options=chrome_options)
-    # TODO: get this working for singleton the loop it => for wod_date in workout_dates:
-    wod_date = self.workout_dates[0]
-    driver.get(self.url+wod_date)
-    popup_xpath = '/html/body/div[3]/div/img'
-    try:
-        popup = driver.find_element_by_xpath(popup_xpath)
-        if popup.is_displayed:
-          popup.click() # Closes the popup
-    except Exception: #NoSuchElementException:
-      # no popup
-      pass
-    else: 
-      inner_html = '\n\t\t\t<h3>11/29/21 WOD</h3>\n\t\t\t<h2 style="text-align: center;"><b>DEUCE ATHLETICS GPP</b></h2>\n<p><span style="font-weight: 400;">Complete 4 rounds for quality of:</span></p>\n<p><span style="font-weight: 400;">8 Barbell Strict Press </span><span style="font-weight: 400;">(3x1x)<br>\n</span><span style="font-weight: 400;">8 Single Kettlebell Lateral Lunge</span></p>\n<p><span style="font-weight: 400;">Then, AMRAP 12</span></p>\n<p><span style="font-weight: 400;">1,2,3,…,∞<br>\n</span><span style="font-weight: 400;">Front Squat (135/95)<br>\n</span><span style="font-weight: 400;">DB Renegade Row (40/20)</span></p>\n<p><span style="font-weight: 400;">**Every 2 min, 1 7th Street Corner Run</span></p>\n<h2 style="text-align: center;"><b>DEUCE GARAGE GPP</b></h2>\n<p><span style="font-weight: 400;">5-5-5-5-5<br>\n</span><span style="font-weight: 400;">Pendlay Row</span></p>\n<p><span style="font-weight: 400;">Then, complete 3 rounds for quality of:</span></p>\n<p><span style="font-weight: 400;">10 Single Arm Bent Over row (ea)<br>\n</span><span style="font-weight: 400;">10-12 Parralette Push Ups<br>\n</span><span style="font-weight: 400;">10 Hollow Body Lat Pulls&nbsp;</span></p>\n<p><span style="font-weight: 400;">Then, AMRAP8</span></p>\n<p><span style="font-weight: 400;">6 Chest to Bar Pull Ups<br>\n</span><span style="font-weight: 400;">8 HSPU<br>\n</span><span style="font-weight: 400;">48 Double unders</span></p>\n\t\t'
-      inner_html = self.replace_chars(inner_html)
-      df_wod = pd.read_html('<table>' + inner_html + '</table>')
-      print(df_wod)
-      wod_link_xpath = '/html/body/div[1]/main/center/article/div/p/a'
-      wod_link = driver.find_element_by_xpath(wod_link_xpath)
-      ActionChains(driver).move_to_element(wod_link).click(wod_link).perform()
-      wod_element = WebDriverWait(driver, 10).until(
-          EC.presence_of_element_located((By.CLASS_NAME, "wod_block"))
-      )
-      wod_innerHTML = wod_element.get_attribute('innerHTML')
-      df_wod = pd.read_html("<table>" + wod_innerHTML + "</table>")
-      wod_json_str = df_wod.to_json(orient='records')
-      obj_data = json.loads(wod_json_str)
-      json_formatted_str += json.dumps(obj_data, indent=4) 
-    finally:
-      driver.quit()  
-      return json_formatted_str      
+
+  def webscrape_html_data(self, url) -> str:
+    """ Scrape the landing page for the day, then  pull out all the href tags
+    re-scrape for the actual wod embedded in the linkable article w/in 
+    <div class="entry-summary>
+    """
+    xhtml = url_get_contents(url).decode('utf-8')
+    return replace_chars(xhtml)
 
 # If you need to, you can create any additional classes or functions here as well.
+def url_get_contents(url):
+    """ Opens a website and read its binary contents (HTTP Response Body) """   
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.88 Safari/537.36", 
+        }
+    req = urllib.request.Request(url=url, headers=headers)
+    f = urllib.request.urlopen(req)
+    return f.read()
 
-# Replace \n and * in  and \t code with empty string
-@staticmethod
+# Replace \n and \t code with empty string
 def replace_chars(s: str) -> str:
-    s = s.replace('\n', '').replace('*', '').replace('\t', '')
+    s = s.replace('\n', '').replace('\t', '')
     return s  
 
 # Problem 5 (2 points)
 # Assign a variable named 'obj_1' an example instance of one of your classes
-import urllib.request
-import pprint
-
-def main():
-    url = 'https://w3schools.com/html/html_tables.asp'
-    xhtml = url_get_contents(url).decode('utf-8')
-
-    p = HTMLTableParser()
-    p.feed(xhtml)
-
-    # Get all tables
-    pprint(p.tables)
-
-    # Get tables with id attribute
-    pprint(p.named_tables)
-
-
-if __name__ == '__main__':
-    main()
-
+obj_1 = Deuce()    
+    
 # Problem 6 (2 points)
 #  Assign a variable named 'obj_2' an example instance of another one of your
 #  classes
-
+obj_2 = WebData(obj_1.wod_urls[0])
 
 # Problem 7 (2 points)
 #  Assign a variable named 'obj_3' an example instance of one of your classes
 #  that extends another class
+obj_3 = HTMLElementParser()
+obj_3.feed(obj_2.html_data)
+print(obj_3.data)
+obj_3.close()
+    
+# Get all tables
+#pprint(obj_3.tables)
 
+# Get tables with id attribute
+#pprint(obj_3.named_tables)
 
 # Problems 8 through 14 are worth 4 points each.
 #    For each problem you must implement a test method in the following
