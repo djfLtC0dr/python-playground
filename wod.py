@@ -18,6 +18,43 @@ class Gpp:
             raise ValueError("%s is not a valid type. Please enter a number 1, 2, 3, or 4" % type)
     self.type = type
 
+class Workout():
+  TYPES = {
+  0 : 'STRENGTH',
+  1 : 'METCON',
+  }
+  
+  def __init__(self, workout_type=0, gpp=None):
+    self.workout_type = workout_type
+    self.gpp = gpp 
+
+class Strength(Workout):
+  
+  def __init__(self, *args, **kwargs):
+    self.one_rm_bs = self.get_one_rm_bs()  
+    super(Strength, self).__init__(*args, **kwargs)
+
+  def get_one_rm_bs(self) -> int:
+    one_rm_bs = int(input("What is your 1RM Back Squat?\n"))
+    return one_rm_bs 
+
+
+class MetCon(Workout):
+  # AC => 30-60 liss @RPE1-3 Active Recovery
+  # HII => Work :30 Rest 2:00 Repeat 5x Cardio-Respiratory
+  # SE => Heavy :30 Rest 1:00 Repeat 8x
+  # PI => Work :06 Rest 2:00 Repeat 10x
+  # TI_PC => Work :15 Easy :45, PC Rest 2:00
+  # MM => 3x Exercises UB/no rest, Rest 1:1, Repeat 5x
+  AEROBIC_CAPACITY, HI_INTENSITY_INTERVAL, STRENGTH_ENDURANCE, POWER_INTERVAL, TEMPO_INTERVAL_POWER_CAPACITY, MIXED_MODAL = range(6)
+
+  def __init__(self, metcon_type, work: int, rest: int, intervals: int, *args, **kwargs):
+      self.metcon_type = metcon_type
+      self.work = work
+      self.rest = rest
+      self.intervals = intervals
+      super(MetCon, self).__init__(*args, **kwargs)
+
 class Cycle():
   # date format
   DT_STR_FORMAT = "%Y-%m-%d"
@@ -65,14 +102,15 @@ class Tsac(Cycle):
     self.pdf_data = PdfData(Tsac.MASH_PDF, Tsac.PDF_SC_LV_PAGES, self.workout_dates)
     self.cylce_wods_json = self.pdf_data.load_pdf_to_json()
       
-
-class Sslp(Cycle):
+class Sslp(Strength, Cycle):
   # csv to store the SSLP Macro Cycle
   SSLP_CSV = "sslp.csv"
   SSLP_URL = "https://startingstrength.com/get-started/programs" # Webscrape
 
   def __init__(self, *args, **kwargs):
-    super(Sslp, self).__init__(*args, **kwargs)    
+    Strength.__init__(self, workout_type=0, gpp=Gpp.TYPES[4])
+    Cycle.__init__(self, **kwargs)
+    #super(Sslp, self).__init__(*args, **kwargs)    
     self._df_sslp = self.init_df_from_csv()
     self.cycle_wods_json = self.generate_cycle_wods_json()
 
@@ -100,11 +138,10 @@ class Sslp(Cycle):
   # Powerlifting Deadlift: 120% of back squat 
   # Military Press (strict): 45% of back squat
   # Power Clean: 68% of back squat
-  def calc_sslp_ph1(self):
-    one_rm_bs = int(input("What is your 1RM Back Squat?\n"))
-    one_rm_bp = (one_rm_bs * .75)
-    one_rm_sp = (one_rm_bs * .45)
-    one_rm_dl = (one_rm_bs * 1.20)
+  def calc_sslp_ph1(self) -> list:
+    one_rm_bp = (self.one_rm_bs * .75)
+    one_rm_sp = (self.one_rm_bs * .45)
+    one_rm_dl = (self.one_rm_bs * 1.20)
     bs_pct_inc = 2.5
     bp_pct_inc = 2.0
     sp_pct_inc = 1.5
@@ -115,7 +152,7 @@ class Sslp(Cycle):
     ph1_rx_dl_loading = []
     for i in range(1, len(self.workout_dates), 5):
       # starting at 80% to allow reasonable linear progression
-      bs = str((one_rm_bs * pct_1rm) + (i * bs_pct_inc))
+      bs = str((self.one_rm_bs * pct_1rm) + (i * bs_pct_inc))
       bp = str((one_rm_bp * pct_1rm) + (i * bp_pct_inc))
       sp = str((one_rm_sp * pct_1rm) + (i * sp_pct_inc))
       dl = str((one_rm_dl * pct_1rm) + (i * dl_pct_inc))
@@ -140,27 +177,3 @@ class Sslp(Cycle):
     obj_data = json.loads(wods_json_str)
     json_formatted_str += json.dumps(obj_data, indent=4) 
     return json_formatted_str
-
-class Workout():
-  STRENGTH, METCON = range(2)
-  
-  def __init__(self, workout_type, gpp=None, cycle=None):
-      self.workout_type = workout_type
-      self.gpp = gpp
-      self.cycle = cycle    
-
-class MetCon(Workout):
-  # AC => 30-60 liss @RPE1-3 Active Recovery
-  # HII => Work :30 Rest 2:00 Repeat 5x Cardio-Respiratory
-  # SE => Heavy :30 Rest 1:00 Repeat 8x
-  # PI => Work :06 Rest 2:00 Repeat 10x
-  # TI_PC => Work :15 Easy :45, PC Rest 2:00
-  # MM => 3x Exercises UB/no rest, Rest 1:1, Repeat 5x
-  AEROBIC_CAPACITY, HI_INTENSITY_INTERVAL, STRENGTH_ENDURANCE, POWER_INTERVAL, TEMPO_INTERVAL_POWER_CAPACITY, MIXED_MODAL = range(6)
-
-  def __init__(self, metcon_type, work: int, rest: int, intervals: int, *args, **kwargs):
-      self.metcon_type = metcon_type
-      self.work = work
-      self.rest = rest
-      self.intervals = intervals
-      super(MetCon, self).__init__(*args, **kwargs)

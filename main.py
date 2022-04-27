@@ -2,7 +2,6 @@
 # a website that requires a user to click on an href tag to load content into the website 
 # or loads data from a local PDF File or loads web/CSV data
 from wod import Cycle, Deuce, Gpp, Sslp, Tsac
-from web_data import WebData
 import traceback
 from datetime import date
 
@@ -23,7 +22,7 @@ try:
     tsac = Tsac(cycle.start_dt, cycle.end_dt)
     print(tsac.cylce_wods_json)
   elif gpp.TYPES[gpp.type]  == 'SSLP':
-    sslp = Sslp(cycle.start_dt, cycle.end_dt)
+    sslp = Sslp(start_dt=cycle.start_dt, end_dt =cycle.end_dt)
     print(sslp.cycle_wods_json)
   else:
     print("That's a 'No-Rep!' Choose Option 4--Novice--to get a Novice Linear Progression Phase 1 Breakdown based on StartingStrength.com")
