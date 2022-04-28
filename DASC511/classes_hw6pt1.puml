@@ -54,14 +54,14 @@ class "hw6pt1.Deuce" as hw6pt1.Deuce {
   get_wod_url() -> None
 }
 class "hw6pt1.HTMLDeuceParser" as hw6pt1.HTMLDeuceParser {
-  recording : tuple, bool
+  recording : bool, tuple
   wod_data : list
   handle_data(data)
   handle_endtag(tag)
   handle_starttag(tag, attrs)
 }
 class "hw6pt1.WebData" as hw6pt1.WebData {
-  html_data
+  html_data : str
   url : str
   webscrape_html_data(url) -> str
 }

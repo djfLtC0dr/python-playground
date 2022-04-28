@@ -18,7 +18,7 @@ class Deuce():
     self.workout_dates = workout_dates
     self.wod_urls = []
     self.get_wod_url()
-    self.web_data = WebData()
+    self.web_data:WebData = WebData()
     #self.cycle_wods_json = self._web_data.cycle_wods_json()
 
   def add_wod_url(self, a_href: str):
@@ -47,7 +47,7 @@ class WebData:
     def __init__(self, url: str = ''):
         self.url = url
         if url != '':
-          self.html_data = self.webscrape_html_data(self.url)
+          self.html_data: str = self.webscrape_html_data(self.url)
 
     def webscrape_html_data(self, url) -> str:
         """ Opens a website and read its binary contents (HTTP Response Body)"""   
