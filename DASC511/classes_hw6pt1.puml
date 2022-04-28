@@ -1,0 +1,71 @@
+@startuml classes_hw6pt1
+set namespaceSeparator none
+class "_markupbase.ParserBase" as _markupbase.ParserBase {
+  lineno : int
+  offset : int
+  error(message)
+  getpos()
+  parse_comment(i, report)
+  parse_declaration(i)
+  parse_marked_section(i, report)
+  reset()
+  unknown_decl(data)
+  updatepos(i, j)
+}
+class "html.parser.HTMLParser" as html.parser.HTMLParser {
+  CDATA_CONTENT_ELEMENTS : tuple
+  cdata_elem : NoneType
+  convert_charrefs : bool
+  interesting
+  lasttag : str
+  rawdata : str
+  check_for_whole_start_tag(i)
+  clear_cdata_mode()
+  close()
+  feed(data)
+  get_starttag_text()
+  goahead(end)
+  handle_charref(name)
+  handle_comment(data)
+  handle_data(data)
+  handle_decl(decl)
+  handle_endtag(tag)
+  handle_entityref(name)
+  handle_pi(data)
+  handle_startendtag(tag, attrs)
+  handle_starttag(tag, attrs)
+  parse_bogus_comment(i, report)
+  parse_endtag(i)
+  parse_html_declaration(i)
+  parse_pi(i)
+  parse_starttag(i)
+  reset()
+  set_cdata_mode(elem)
+  unescape(s)
+  unknown_decl(data)
+}
+class "hw6pt1.Deuce" as hw6pt1.Deuce {
+  DEUCE_URL : str
+  gpp_type : str
+  web_data
+  wod_urls : list
+  workout_dates : list
+  add_wod_url(a_href: str)
+  get_wod_url() -> None
+}
+class "hw6pt1.HTMLDeuceParser" as hw6pt1.HTMLDeuceParser {
+  recording : tuple, bool
+  wod_data : list
+  handle_data(data)
+  handle_endtag(tag)
+  handle_starttag(tag, attrs)
+}
+class "hw6pt1.WebData" as hw6pt1.WebData {
+  html_data
+  url : str
+  webscrape_html_data(url) -> str
+}
+html.parser.HTMLParser --|> _markupbase.ParserBase
+hw6pt1.HTMLDeuceParser --|> html.parser.HTMLParser
+hw6pt1.WebData --* hw6pt1.Deuce : web_data
+@enduml

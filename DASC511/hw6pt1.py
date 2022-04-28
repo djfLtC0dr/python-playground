@@ -18,6 +18,7 @@ class Deuce():
     self.workout_dates = workout_dates
     self.wod_urls = []
     self.get_wod_url()
+    self.web_data = WebData()
     #self.cycle_wods_json = self._web_data.cycle_wods_json()
 
   def add_wod_url(self, a_href: str):
@@ -27,8 +28,8 @@ class Deuce():
     # TODO: get this working for singleton then loop it => for wod_date in workout_dates:
     wod_date = self.workout_dates[0]
     wod_url_base = Deuce.DEUCE_URL + wod_date
-    wd = WebData(wod_url_base)
-    xhtml = wd.html_data
+    self.web_data.__init__(wod_url_base)
+    xhtml = self.web_data.html_data
     list_wod_links = re.findall("href=[\"\'](.*?)[\"\']", xhtml)
     wod_url = ''
     for url in list_wod_links:
@@ -45,7 +46,8 @@ class WebData:
     """ This class serves as a storage mechanism for an HTTPResponse object data decoded to utf-8 string"""    
     def __init__(self, url: str = ''):
         self.url = url
-        self.html_data = self.webscrape_html_data(self.url)
+        if url != '':
+          self.html_data = self.webscrape_html_data(self.url)
 
     def webscrape_html_data(self, url) -> str:
         """ Opens a website and read its binary contents (HTTP Response Body)"""   
