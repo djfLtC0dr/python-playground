@@ -1,6 +1,10 @@
-import urllib.request
-from urllib.request import urlopen
-import re
+# import urllib.request
+# from urllib.request import urlopen
+from html.parser import HTMLParser
+#import re
+import requests
+from requests_html import HTMLSession
+from requests_html import HTML
 
 # Problem 1 (2 points)
 # Assign the 'name' variable an object that is your name of type str.
@@ -18,7 +22,7 @@ class Deuce():
     self.workout_dates = workout_dates
     self.wod_urls = []
     self.get_wod_url()
-    self.web_data:WebData = WebData()
+    self.web_data = WebData()
     #self.cycle_wods_json = self._web_data.cycle_wods_json()
 
   def add_wod_url(self, a_href: str):
@@ -28,14 +32,15 @@ class Deuce():
     # TODO: get this working for singleton then loop it => for wod_date in workout_dates:
     wod_date = self.workout_dates[0]
     wod_url_base = Deuce.DEUCE_URL + wod_date
-    self.web_data.__init__(wod_url_base)
-    xhtml = self.web_data.html_data
-    list_wod_links = re.findall("href=[\"\'](.*?)[\"\']", xhtml)
-    wod_url = ''
-    for url in list_wod_links:
-        if wod_url_base in url:
-          wod_url = url
-          break
+    self.web_data = WebData(wod_url_base)
+    obj_html = self.web_data.html
+    sel_url = obj_html.xpath('/html/body/div[1]/main/center/article/div/a')
+    #list_wod_links = re.findall("href=[\"\'](.*?)[\"\']", xhtml)
+    wod_url = sel_url[0].links.pop()
+    # for url in list_wod_links:
+    #     if wod_url_base in url:
+    #       wod_url = url
+    #       break
     #print("wod_url => ", wod_url)
     #a_href =  url_get_contents(wod_url[0]).decode('utf-8')
     self.add_wod_url(wod_url)
@@ -47,53 +52,88 @@ class WebData:
     def __init__(self, url: str = ''):
         self.url = url
         if url != '':
-          self.html_data: str = self.webscrape_html_data(self.url)
+          self.html: HTML = self.webscrape_html_data(self.url)
 
-    def webscrape_html_data(self, url) -> str:
+    def webscrape_html_data(self, url) -> HTML:
         """ Opens a website and read its binary contents (HTTP Response Body)"""   
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.88 Safari/537.36", 
-            "Content-type": "application/json; charset=utf-8",
-            "Accept": "application/json",
-            }
-        req = urllib.request.Request(url=url, headers=headers)
-        with urlopen(req) as response:
-            response_content = replace_chars(response.read().decode('utf-8'))
-        return response_content
+
+        try:
+            session = HTMLSession()
+            raw_html_data = session.get(url)     
+            clean_html_data = HTML(html=replace_chars(raw_html_data.text))
+        except requests.exceptions.RequestException as e:
+            print(e)
+        return clean_html_data
 
 # Problem 4 (2 points)
 # Create another class and implement it for your problem of interest
-from html.parser import HTMLParser
-
 class HTMLDeuceParser(HTMLParser):
     """ This class serves as a html Deuce GPP parser. It extends HTMLParser and is able to parse div
     tags containing class="wod_block" which you feed in. You can access the result per .wod_data field.
     """
-    def __init__(self):
-        self.recording = False,
-        self.wod_data = []
+    DIV_WODBLOCK_XPATH = '/html/body/div[1]/main/center/article/div/div[3]'
+
+    def __init__(self, html: HTML):
+        self.recording = False
+        self.html = html
+        self.wodblock = self.html.xpath(self.DIV_WODBLOCK_XPATH) 
+        self.tag = ''
+        self.wod_table = ['<table>']
         #self.convert_charrefs = False
         # initialize the base class
-        HTMLParser.__init__(self)
+        HTMLParser.__init__(self)         
 
     def handle_starttag(self, tag, attrs):      
         if tag == 'div':
-            for name, value in attrs:
-                if name == 'class' and value == 'wod_block':
-                    #print(value)
-                    #print("Encountered the beginning of a %s tag" % tag)
-                    self.recording = True 
+            self.tag = 'th'
+            # for value in attrs:
+                # print(value)
+                # print("Encountered the beginning of a %s tag" % tag)
+            self.recording = True 
+        elif tag == 'h2':
+            self.tag = 'th'
+            # for value in attrs:
+                # print(value)
+                # print("Encountered the beginning of a %s tag" % tag)
+            self.recording = True  
+        elif tag == 'p' or tag == 'span':
+            self.tag = 'tr'
+            # for value in attrs:
+                # print(value)
+                # print("Encountered the beginning of a %s tag" % tag)
+            self.recording = True                 
+        elif tag == 'span':
+            self.tag = 'td'
+            # for value in attrs:
+                # print(value)
+                # print("Encountered the beginning of a %s tag" % tag)
+            self.recording = True                            
         else:
+            self.recording = True
             return
 
     def handle_endtag(self, tag):
         if tag == 'div' and self.recording == True:
+            self.tag = 'th'
             self.recording = False 
-            #print("Encountered the end of a %s tag" % tag)
+            # print("Encountered the end of a %s tag" % tag)
+        elif tag == 'h2' and self.recording == True:
+            self.tag = 'th'
+            self.recording = False 
+            # print("Encountered the end of a %s tag" % tag)     
+        elif (tag == 'b' or tag == 'br') and self.recording == True:
+            pass # FIXME: Does this breake the table?
+            # self.recording = False
+        elif (tag == 'p' or tag == 'span') and self.recording == True:
+            self.tag = 'tr'
+            self.recording = False 
+            # print("Encountered the end of a %s tag" % tag)                   
+        else:
+            return # We don't want <h3>              
 
     def handle_data(self, data):
         if self.recording == True:
-            self.wod_data.append(data)
+            self.wod_table.append('<' + self.tag + '>' + data + '</' + self.tag + '>')
 
 # If you need to, you can create any additional classes or functions here as well.
 # Replace \n and \t and \r embedded \0 strings with empty string
@@ -113,7 +153,11 @@ obj_2 = WebData(obj_1.wod_urls[0])
 # Problem 7 (2 points)
 #  Assign a variable named 'obj_3' an example instance of one of your classes
 #  that extends another class
-obj_3 = HTMLDeuceParser()
-obj_3.feed(obj_2.html_data)
-#print(obj_3.wod_data)
-obj_3.close()
+obj_3 = HTMLDeuceParser(obj_2.html)
+obj_3.feed(obj_3.wodblock[0].html)
+obj_3.wod_table.append('</table>')
+print(obj_3.wod_table)
+# obj_3 = HTMLDeuceParser()
+# obj_3.feed(obj_2.html_data
+# #print(obj_3.wod_data)
+# obj_3.close()
