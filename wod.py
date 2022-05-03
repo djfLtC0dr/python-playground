@@ -2,7 +2,24 @@ from datetime import timedelta, date
 import pandas as pd
 from web_data import WebData
 from pdf_data import PdfData
+from rss_data import RssData
 import json
+
+class PushJerk:
+  # Constant URL 
+  PJ_URL = 'http://pushjerk.com/feed/?s='# Webscrape
+
+  TYPES = {
+  0 : '',
+  1 : 'Hatch',
+  2 : 'Juggernaut',
+  3 : '7/13',
+  4 : 'Texas Method'
+  }
+  
+  def __init__(self, pj_type):
+    self._rss_data = RssData(PushJerk.PJ_URL, pj_type)
+    self.wods_json = self._rss_data.wods_json
 
 class Gpp:  
   TYPES = {
