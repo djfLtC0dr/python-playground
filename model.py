@@ -19,7 +19,7 @@ class Model:
         self.__pj_type = value
 
     def scrape(self):
-        print ("value is:" + self.pj_type)
+        #print ("value is:" + self.pj_type)
         pj = PushJerk(self.pj_type)
         pj_wods_json = json.loads(pj.wods_json)
         return pj_wods_json

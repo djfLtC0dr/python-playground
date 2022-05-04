@@ -2,17 +2,25 @@ import requests
 from bs4 import BeautifulSoup
 import json
 
+
 class RssData:
-    def __init__(self, url: str, query_type: str):
+    def __init__(self, url: str, query_type: str, params: str):
         self.url = url
         self.query_type = query_type
+        self.params = params
         self.wods_json = self.webscrape_data_rss()
 
     # scraping function
     def webscrape_data_rss(self) -> str:
         wod_list = []
         try:
-            r = requests.get(self.url + self.query_type)
+            
+            headers = {
+            'Content-Type' :'application/rss+xml',
+            'Authorization': 'Basic Key',
+            'Cookie': 'session'
+            }        
+            r = requests.get(url=self.url, headers=headers, params=self.params)
             soup = BeautifulSoup(r.content, features='xml')
             wods = soup.findAll('item') 
             for w in wods:

@@ -7,7 +7,7 @@ import json
 
 class PushJerk:
   # Constant URL 
-  PJ_URL = 'http://pushjerk.com/feed/?s='# Webscrape
+  PJ_URL = 'http://pushjerk.com/feed'# Webscrape 
 
   TYPES = {
   0 : '',
@@ -18,7 +18,8 @@ class PushJerk:
   }
   
   def __init__(self, pj_type):
-    self._rss_data = RssData(PushJerk.PJ_URL, pj_type)
+    _params = {"s": pj_type, "orderby": "pubDate", "order": 'ASC'}
+    self._rss_data = RssData(PushJerk.PJ_URL, pj_type, params=_params)
     self.wods_json = self._rss_data.wods_json
 
 class Gpp:  
@@ -107,7 +108,7 @@ class Deuce(Cycle):
   def __init__(self, gpp_type, *args, **kwargs):
     super(Deuce, self).__init__(*args, **kwargs)
     self._web_data = WebData(Deuce.DEUCE_URL, gpp_type, self.workout_dates)
-    self.cycle_wods_json = self._web_data.cycle_wods_json()
+    self.cycle_wods_json = self._web_data.wods_json()
 
 class Tsac(Cycle):
   MASH_PDF = "mash-evolution.pdf" # PDF

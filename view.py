@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
+from tkhtmlview import HTMLLabel
 from wod import PushJerk
 
 class View(ttk.Frame):
@@ -26,7 +27,8 @@ class View(ttk.Frame):
         # tree view Wod display
         self.treeview = ttk.Treeview(self, show="headings", columns=("WODs"))
         self.treeview.heading("#1", text="WODs")
-        self.treeview.grid(row=2, columnspan=3, sticky='nsew') 
+        self.treeview.grid(row=2, columnspan=6, sticky='nsew') 
+        self.treeview.bind("<Double-1>", self.OnDoubleClick)
 
         # set the controller
         self.controller = None
@@ -51,6 +53,17 @@ class View(ttk.Frame):
         :return:
         """
         if self.controller:
-            pj_wods_json = self.controller.scrape(self.pj_type_var.get())
+            if len(self.treeview.get_children()) > 0:
+                pass # TODO: figure out how to clear 
+            pj_type_selected = self.pj_type_var.get()
+            pj_wods_json = self.controller.scrape(pj_type_selected)
+            i:int = 0
             for row in pj_wods_json:
-                self.treeview.insert("", "end", values=row["content"]) # values=(row["pubDate"],  
+                i += 1
+                value = pj_type_selected + str(i)
+                #label = HTMLLabel(self, html=str(row["content"]))
+                self.treeview.insert("", "end", values=value, text=str(row["content"])) # values=(row["pubDate"],  
+
+    def OnDoubleClick(self, event):
+        item = self.treeview.identify('item',event.x,event.y)
+        print("you clicked on", self.treeview.item(item,"text"))

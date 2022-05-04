@@ -1,4 +1,5 @@
 # selenium 
+from bs4 import BeautifulSoup
 from selenium import webdriver 
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.action_chains import ActionChains
@@ -8,17 +9,13 @@ from selenium.webdriver.support import expected_conditions as EC
 import pandas as pd
 import json
 
-chrome_options = Options() 
-chrome_options.add_argument('--no-sandbox') 
-chrome_options.add_argument('--disable-dev-shm-usage')
-chrome_options.add_argument("--headless")
-
 class WebData:
-  def __init__(self, url: str, gpp_type: str, workout_dates: list):
+  def __init__(self, url: str, gpp_type: str, workout_dates: list = [], params: str = ''):
     self.url = url
     self.gpp_type = gpp_type
     self.workout_dates = workout_dates
-    self.cycle_wods_json = self.webscrape_data_to_json
+    self.params = params
+    self.wods_json = self.webscrape_data_to_json
 
   # Replace \n and * in  and \t code with empty string
   @staticmethod
@@ -31,7 +28,7 @@ class WebData:
   # DEUCE ultimately needs to be jsonified and saved to db
   def webscrape_data_to_csv(self) -> bool:
     bool_csv_created = False
-    driver = webdriver.Chrome(options=chrome_options)
+    driver = webdriver.Chrome(options=self.get_chrome_options())
     driver.get(self.url)
     elem_to_find = "proggy"
     try:
@@ -50,8 +47,14 @@ class WebData:
         return bool_csv_created
     
   def webscrape_data_to_json(self) -> str:
+    if self.gpp_type == 'DEUCE':
+      return self.webscrape_deuce_data_to_json()
+    else: # PushJerk
+      return self.webscrape_pj_data_to_json()
+
+  def webscrape_deuce_data_to_json(self) -> str:
     json_formatted_str = ''
-    driver = webdriver.Chrome(options=chrome_options)
+    driver = webdriver.Chrome(options=self.get_chrome_options())
     # TODO: get this working for singleton the loop it => for wod_date in workout_dates:
     wod_date = self.workout_dates[0]
     driver.get(self.url+wod_date)
@@ -81,4 +84,37 @@ class WebData:
       json_formatted_str += json.dumps(obj_data, indent=4) 
     finally:
       driver.quit()  
-      return json_formatted_str
+      return json_formatted_str    
+
+  def webscrape_pj_data_to_json(self) -> str:
+    wod_list = []
+    try:
+        driver = webdriver.Chrome(chrome_options=self.get_chrome_options())
+        driver.get(self.url + self.gpp_type + self.params)
+        source_code = driver.page_source
+        soup = BeautifulSoup(source_code,'lxml')
+        entry_block = soup.find_all('div', class_='entry-title')
+        for entries in entry_block:
+          pj_entry_url = entries.find('a')
+          wod_list.append(pj_entry_url)
+        # for w in wods:
+        #     pubDate = w.find('pubDate').text
+        #     encoded_content = w.find('encoded')
+        #     for child in encoded_content.children:
+        #         content = str(child)
+        #     wod = {
+        #         'pubDate': pubDate,
+        #         'content': content,
+        #     }
+        #     wod_list.append(wod)
+    except Exception as e:
+        print('The scraping job failed. See exception: ')
+        print(e)
+    return json.dumps(wod_list)    
+
+  def get_chrome_options():
+    options = webdriver.ChromeOptions()
+    options.add_argument('--ignore-certificate-errors')
+    options.add_argument('--incognito')
+    options.add_argument('--headless')
+    return options    
