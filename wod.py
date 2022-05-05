@@ -14,11 +14,20 @@ class PushJerk:
   1 : 'Hatch',
   2 : 'Juggernaut',
   3 : '7/13',
-  4 : 'Texas Method'
+  4 : 'Texas'
   }
   
   def __init__(self, pj_type):
-    _params = {"s": pj_type, "orderby": "pubDate", "order": 'ASC'}
+    _search_str = ''
+    if pj_type == 'Hatch':
+      _search_str = '12 – Hatch'
+    elif pj_type == 'Juggernaut':
+      _search_str = '/16: Inverted Juggernaut Method'
+    elif pj_type == '7/13':
+      _search_str = '(7/13'
+    elif pj_type == 'Texas':
+      _search_str = '(Texas'
+    _params = {"s": _search_str, "orderby": "pubDate", "order": 'ASC'}
     self._rss_data = RssData(PushJerk.PJ_URL, pj_type, params=_params)
     self.wods_json = self._rss_data.wods_json
 

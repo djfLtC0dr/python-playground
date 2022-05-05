@@ -4,7 +4,6 @@
 #from wod import PushJerk # Cycle, Deuce, Gpp, Sslp, Tsac
 #from datetime import date
 import tkinter as tk
-from tkinter import ttk
 from model import Model
 from view import View
 from controller import Controller
@@ -14,7 +13,7 @@ class WodApp(tk.Tk):
         super().__init__()
 
         self.geometry('{}x{}'.format(800, 600))
-        self.resizable(0, 0)
+        self.resizable(True, True)
         self.title('WOD App')
 
         # create a model
