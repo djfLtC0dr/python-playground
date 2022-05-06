@@ -46,8 +46,8 @@ class RssData:
             print('The scraping job failed. See exception: ')
             print ("Http Error:",errh)
         except requests.exceptions.ConnectionError as errc:
-            if errc.args[0].args[1].errno == 104: # TODO: ConnectionResetError(54, 'Connection reset by peer')
-                self.webscrape_data_rss() # retry ConnectionResetError(104, 'Connection reset by peer'))
+            if errc.args[0].args[1].errno in [54, 104]: 
+                self.webscrape_data_rss() # retry 
             else:
                 print('The scraping job failed. See exception: ')
                 print ("Error Connecting:",errc)
@@ -63,7 +63,7 @@ class RssData:
             else:
                 wod = {
                         'wod_date': 'CNX',
-                        'wod_details': 'NSTR'
+                        'wod_details': "<p>ConnectionResetError([54,104], 'Connection reset by peer'</p>)"
                     }
                 wod_list.append(wod)
                 return json.dumps(wod_list)
