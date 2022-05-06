@@ -35,21 +35,28 @@ class View(ttk.Frame):
         # HTMLLable view selected 
         self.html_label = HTMLLabel(self, background='#333330', width=28)
         self.html_label.grid(row=2, column=3)
-        # hide unless handle_double_click
-        self.html_label.grid_remove()
 
+        # Calendar
         self.cal = Calendar(self, selectmode='day', locale='en_US',
                    cursor="hand1", year=2022, font='Helvetica 11', showweeknumbers=False)
         self.cal.grid(row=2, column=5, padx=10, sticky=tk.NE)
-        # hide unless handle_double_click
-        self.cal.grid_remove()
+
+        # Squat Label
+        self.lbl_sqt = ttk.Label(self, text='Enter 5RM Squat:')
+        self.lbl_sqt.grid(row=3, column=5, padx=5)
+        # Squat Entry
+        self.entry_sqt = ttk.Entry(self)
+        self.entry_sqt.grid(row=3, column=6, padx=5)
 
         # set the controller
         self.controller = None
 
         # Set the theme
         self.tk.call("source", "azure.tcl")
-        self.tk.call("set_theme", "dark")        
+        self.tk.call("set_theme", "dark")   
+        
+        # Hide widgets until show widgets called
+        self.remove_widgets()   
 
     def set_controller(self, controller):
         """
@@ -91,13 +98,12 @@ class View(ttk.Frame):
             if len(pj_wods_json) == 1: # CNX Error
                 value = pj_type_selected + '_' + str(pj_wods_json[0]["wod_date"][0:3]) + '_Error--''retry'''
                 self.tree_view.insert("", "end", values=(value), text=str(pj_wods_json[0]["wod_details"]))
-                self.cal.grid_remove() # TODO grid_remove all wod logging widgets
+                self.remove_widgets() 
             else:
                 i:int = 0
                 for row in pj_wods_json:
                     i += 1
                     value = pj_type_selected + '_' + str(row["wod_date"][0:3]) + '_' + str(i)
-                    #label = HTMLLabel(self, html=str(row["content"]))
                     self.tree_view.insert("", "end", values=(value), text=str(row["wod_details"]))  
 
     def handle_double_click(self, event):
@@ -107,10 +113,17 @@ class View(ttk.Frame):
         html_text = self.tree_view.item(item,"text")
         html = div_style_open_tag + html_text + div_style_close_tag
         self.html_label.set_html(html)
-        self.html_label.grid()
-        if html_text.find('ConnectionResetError([54,104]') == -1: # no weired connection error
-            self.cal.grid()
+        self.show_widgets(html_text)
 
     def remove_widgets(self):
         self.html_label.grid_remove()   
         self.cal.grid_remove()
+        self.lbl_sqt.grid_remove()
+        self.entry_sqt.grid_remove()
+
+    def show_widgets(self, html_text: str):
+        if html_text.find('ConnectionResetError([54,104]') == -1: # no weired connection error
+            self.html_label.grid()
+            self.cal.grid()
+            self.lbl_sqt.grid()
+            self.entry_sqt.grid()       
