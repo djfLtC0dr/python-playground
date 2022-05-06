@@ -34,7 +34,7 @@ if __name__ == '__main__':
     app.mainloop()
 
 
-
+# Code that follows is for Console App
 """   try:
     gpp = Gpp(int(input("Enter the number corresponding to the type of athlete that best describes you:\n1) Functional Fitness;\n2) Garage Gym Warrior;\n3) Tactical;\n4) Novice \n")))
   except ValueError as e:

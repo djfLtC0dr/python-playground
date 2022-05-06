@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
+from turtle import bgcolor
 from tkhtmlview import HTMLLabel
 from tkcalendar import Calendar
 from wod import PushJerk
@@ -22,24 +23,26 @@ class View(ttk.Frame):
         self.option_menu.grid(row=1, column=1, sticky=tk.NSEW)
 
         # go button
-        self.go_button = ttk.Button(self, text='Go', command=self.go_button_clicked)
+        self.go_button = ttk.Button(self, text='Get WODs', command=self.handle_go_button_clicked)
         self.go_button.grid(row=1, column=3, padx=10, sticky='w')
 
         # tree view WODs scraped display for selection
         self.tree_view = ttk.Treeview(self, show="headings", columns=("WODs"))
         self.tree_view.heading("#1", text="WODs")
-        self.tree_view.grid(row=2, columnspan=2, padx=10, pady=10, sticky='nw') 
+        self.tree_view.grid(row=2, columnspan=2, padx=10, sticky='nw') 
         self.tree_view.bind("<Double-1>", self.handle_double_click)
 
         # HTMLLable view selected 
         self.html_label = HTMLLabel(self)
-        self.html_label.grid(row=2, column=3, columnspan=6, rowspan=3, sticky='w')
+        self.html_label.grid(row=2, column=3, rowspan=3, sticky='w')
+        # hide unless handle_double_click
+        self.html_label.grid_remove()
 
-        self.cal = Calendar(self, font="Helvetica 11", selectmode='day', locale='en_US',
+        self.cal = Calendar(self, selectmode='day', locale='en_US',
                    cursor="hand1", year=2022)
-        self.cal.grid(row=2, column=5, padx=10, pady=10, sticky='ne')
-        # TODO: hide unless handle_double_click
-        
+        self.cal.grid(row=2, column=5, padx=10, sticky='ne')
+        # hide unless handle_double_click
+        self.cal.grid_remove()
 
         # set the controller
         self.controller = None
@@ -48,8 +51,9 @@ class View(ttk.Frame):
         self.style = ttk.Style(self)
         self.style.configure('TLabel', bgcolor='#282828', font=('Helvetica', 11), color='white')
         self.style.configure('TButton', bgcolor='#282828', font=('Helvetica', 11), color='white')
-        self.style.configure('Treeview', bgcolor='#282828', font=('Helvetica', 11), color='white')    
-        self.style.configure('HTMLLabel', bgcolor='#282828', font=('Helvetica', 11), color='white')    
+        self.style.configure('Treeview', bgcolor='#282828', font=('Helvetica', 11), color='white')     
+        self.style.configure('HTMLLabel', bgcolor='#282828', font=('Helvetica', 11), color='white')  
+        self.style.configure('Calendar', font="Helvetica 11")
 
     def set_controller(self, controller):
         """
@@ -59,7 +63,7 @@ class View(ttk.Frame):
         """
         self.controller = controller
 
-    def go_button_clicked(self):
+    def handle_go_button_clicked(self):
         """
         Handle button click event
         :return:
@@ -73,10 +77,11 @@ class View(ttk.Frame):
                 else: 
                     for child in children:
                         self.tree_view.delete(child)       
-                        self.html_label.set_html('')    
+                    self.html_label.grid_remove()   
+                    self.cal.grid_remove()
             pj_wods_json = self.controller.scrape(pj_type_selected)
             if len(pj_wods_json) == 1: # CNX Error
-                value = pj_type_selected + '_' + str(pj_wods_json[0]["wod_date"][0:3]) + '_Error--''re-GO'''
+                value = pj_type_selected + '_' + str(pj_wods_json[0]["wod_date"][0:3]) + '_Error--''retry'''
                 self.tree_view.insert("", "end", values=(value), text=str(pj_wods_json[0]["wod_details"]))
             else:
                 i:int = 0
@@ -88,7 +93,9 @@ class View(ttk.Frame):
 
     def handle_double_click(self, event):
         item = self.tree_view.identify('item',event.x,event.y)
-        div_style_open_tag = '<div style="Arial, Helvetica, sans-serif; font-size: 10px;>"'
+        div_style_open_tag = '<div style="Arial, Helvetica, sans-serif; font-size: 10px; background-color=#282828; width: 200px;>"'
         div_style_close_tag = "</div>"
         html = div_style_open_tag + self.tree_view.item(item,"text") + div_style_close_tag
         self.html_label.set_html(html)
+        self.html_label.grid()
+        self.cal.grid()
