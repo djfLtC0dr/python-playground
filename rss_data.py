@@ -25,9 +25,9 @@ class RssData:
                 'Upgrade-Insecure-Requests': '1',
                 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.88 Safari/537.36'
             }     
-            # Added this 5-sec timeout to fix a requests.exceptions.ConnectionError: 
+            # Added this timeout to fix a requests.exceptions.ConnectionError: 
             # ('Connection aborted.', ConnectionResetError(104, 'Connection reset by peer')) 
-            obj_response = requests.get(url=self.url, headers=headers, params=self.params, timeout=5)
+            obj_response = requests.get(url=self.url, headers=headers, params=self.params, timeout=10)
             obj_response.raise_for_status()
             if obj_response.status_code == 200:  # 200 for successful call
                 soup = BeautifulSoup(obj_response.content, features='xml')
