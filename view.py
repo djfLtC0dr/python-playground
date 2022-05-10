@@ -27,13 +27,13 @@ class View(ttk.Frame):
         
 
         # tree view WODs scraped display for selection
-        self.tree_view = ttk.Treeview(self, show="headings", columns=("WODs"))
+        self.tree_view = ttk.Treeview(self, show="headings", columns=("WODs"), height=8)
         self.tree_view.heading("#1", text="WODs")
         self.tree_view.grid(row=2, columnspan=2, padx=10, sticky=tk.NW) 
         self.tree_view.bind("<Double-1>", self.handle_double_click)
 
         # HTMLLable view selected 
-        self.html_label = HTMLLabel(self, background='#333330', width=28)
+        self.html_label = HTMLLabel(self, background='#333330', height=12, width=28)
         self.html_label.grid(row=2, column=3)
 
         # Calendar
@@ -46,7 +46,7 @@ class View(ttk.Frame):
         self.lbl_sqt.grid(row=3, column=5, padx=5)
         # Squat Entry
         self.entry_sqt = ttk.Entry(self)
-        self.entry_sqt.grid(row=3, column=6, padx=5)
+        self.entry_sqt.grid(row=3, column=5,padx=5)
 
         # set the controller
         self.controller = None
