@@ -12,7 +12,7 @@ class WodApp(tk.Tk):
     def __init__(self):
         super().__init__()
 
-        self.geometry('{}x{}'.format(800, 600))
+        self.geometry('{}x{}'.format(550, 750))
         self.resizable(True, True)
         self.title('WOD App')
 
