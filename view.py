@@ -24,7 +24,6 @@ class View(ttk.Frame):
         # go button
         self.go_button = ttk.Button(self, text='Get WODs', state=tk.DISABLED, command=self.handle_go_button_clicked)
         self.go_button.grid(row=1, column=3, padx=10, sticky=tk.W)
-        
 
         # tree view WODs scraped display for selection
         self.tree_view = ttk.Treeview(self, show="headings", columns=("WODs"), height=8)
@@ -162,3 +161,6 @@ class View(ttk.Frame):
     
     def get_date_selected(self, e):
         print(self.cal.get_date())
+=======
+        
+>>>>>>> Stashed changes

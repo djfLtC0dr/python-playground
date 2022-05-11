@@ -45,7 +45,7 @@ class Gpp:
             raise ValueError("%s is not a valid type. Please enter a number 1, 2, 3, or 4" % type)
     self.type = type
 
-class Workout():
+class Workout:
   TYPES = {
   0 : 'STRENGTH',
   1 : 'METCON',
@@ -82,7 +82,7 @@ class MetCon(Workout):
       self.intervals = intervals
       super(MetCon, self).__init__(*args, **kwargs)
 
-class Cycle():
+class Cycle:
   # date format
   DT_STR_FORMAT = "%Y-%m-%d"
   def __init__(self, start_dt: date, end_dt: date):
