@@ -44,17 +44,19 @@ class View(ttk.Frame):
         # self.cal = Calendar(self, selectmode='day', locale='en_US', selectbackground='#007fff', selectforeground='#000000',
         #            selection_callback=self.get_selection, cursor="hand1", year=2022, font='Helvetica 11', showweeknumbers=False)
         self.cal.grid(row=3, column=1, pady=5, sticky=tk.W)
-        self.cal.bind("<<DateEntrySelected>>", self.get_date_selected)
-
+    
         # Squat Label
         self.lbl_sqt = ttk.Label(self, text='Enter 5RM Squat:', width=15)
         self.lbl_sqt.grid(row=3, column=3, sticky=tk.W)
         # Squat Entry
+        # declaring string variable for storing entry
+        self.sqt_var = tk.StringVar(self)
         vcmd = self.register(self.validate_digits_only)
-        self.entry_sqt = ttk.Entry(self, width=3, validate='key', validatecommand=(vcmd,'%P'))
+        self.entry_sqt = ttk.Entry(self, width=3, textvariable=sqt_var, validate='key', validatecommand=(vcmd,'%P'))
         self.entry_sqt.grid(row=3, column=4, sticky=tk.W)        
         # Squat Save
-        # TODO: Save button click to mongodb
+        self.btn_sqt = ttk.Button(self, text='Save', width=5, state=tk.DISABLED, command=self.handle_btn_sqt_clicked)
+        self.btn_sqt.grid(row=3, column=5, sticky=tk.W)
 
         # set the controller
         self.controller = None
@@ -132,6 +134,7 @@ class View(ttk.Frame):
         self.cal.grid_remove()
         self.lbl_sqt.grid_remove()
         self.entry_sqt.grid_remove()
+        self.btn_sqt.grid_remove()
 
     def show_widgets(self, html_text: str):
         if html_text.find('ConnectionResetError([54,104]') == -1: # no weired connection error
@@ -139,7 +142,8 @@ class View(ttk.Frame):
             self.lbl_dt.grid()
             self.cal.grid()
             self.lbl_sqt.grid()
-            self.entry_sqt.grid()       
+            self.entry_sqt.grid()     
+            self.btn_sqt.grid()
 
     def validate_digits_only(self, key: str) -> bool:
         try:
@@ -148,19 +152,31 @@ class View(ttk.Frame):
                 if v < 0 or v > 999:
                     raise ValueError
                 else:
-                    return True
+                    self.enable_save()
+                    return True                    
             else:
                 v = str(key)
                 if v != "\x08" and v != '':
                     return False
                 else:
+                    self.enable_save()
                     return True
         except ValueError as ve:
             print(ve)
             return False
     
-    def get_date_selected(self, e):
-        print(self.cal.get_date())
-=======
-        
->>>>>>> Stashed changes
+    def enable_save(self):
+        btn_state = self.btn_sqt.state()
+        if len(btn_state) > 0:
+            if btn_state[0] == tk.DISABLED:
+                self.btn_sqt['state'] = tk.NORMAL
+            else:
+                self.btn_sqt['state'] = tk.DISABLED
+
+    def handle_btn_sqt_clicked(self):
+        if self.controller:
+          input_date = self.cal.get_date()
+          input_sqt = self.sqt_var.get()
+          #a json document
+          sqt_input = { 'date': input_date, 'load': input_sqt }
+          self.controller.insert_doc(sqt_input)

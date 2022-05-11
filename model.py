@@ -27,10 +27,10 @@ class Model:
     return pj_wods_json
 
   def get_collections(self):
-    return self._db.list_collections()
+    return self._db.collections()
 
-  def create_collection(self, name: str):
-    return self._db.create_collection(name)
+  def insert_doc(self, doc):
+    self._db.insert_doc(doc)
        
 
     #TODO: def save(self):

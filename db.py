@@ -10,12 +10,16 @@ class MongoDB:
       self._client = pymongo.MongoClient(self._cnx_string)
       # Set the database
       self._db = self._client['woddb']
+      self._clx = self._db['clx_wods']
       
-    def create_collection(self, name: str = "") -> pymongo.collection:
-      return self._db[name]
-
     def list_collections(self) -> list:
-      return self._db.list_collection_names()
+      list_clx_names = []
+      for clx in self._db.list_collection_names():
+          list_clx_names.append(clx)       
+      return list_clx_names
+
+    def insert_doc(self, doc):
+      self._clx.insert_one(doc)
 
 
 

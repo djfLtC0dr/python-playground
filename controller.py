@@ -18,15 +18,15 @@ class Controller:
         # show an error message
         traceback.print_exc()
 
-    def db_collections(self):
+    def collections(self):
       try:
         return self.model.get_collections()
       except:
         traceback.print_exc()
 
-    def db_create_collection(self, name: str):
+    def insert_doc(self, doc):
       try:
-        return self.model.create_collection(name)
+        self.model.insert_doc(doc)
       except:
         traceback.print_exc()
         
