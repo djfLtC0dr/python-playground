@@ -16,29 +16,27 @@ class Model:
     self.db = self._cnx.db
     # Set the collection
     self.clx_wods = self.db.clx_wods
-    self.collections = self.get_collections()
-    for clx in self.collections:
-      print(json.dumps(clx))
 
   @property
   def pj_type(self):
-    return self.__pj_type
+      return self.__pj_type
 
   @pj_type.setter
   def pj_type(self, value):
-    self.__pj_type = value
+      self.__pj_type = value
 
   def scrape(self):
-    #print ("value is:" + self.pj_type)
-    pj = PushJerk(self.pj_type)
-    pj_wods_json = json.loads(pj.wods_json)
-    return pj_wods_json
+      #print ("value is:" + self.pj_type)
+      pj = PushJerk(self.pj_type)
+      pj_wods_json = json.loads(pj.wods_json)
+      return pj_wods_json
 
   def get_collection(self):
-    return self.clx_wods
+      return self.clx_wods
 
   def insert_doc(self, doc) -> pymongo.results.InsertOneResult:
-    return self.clx_wods.insert_one(doc)
+      return self.clx_wods.insert_one(doc)
 
   def get_collections(self):
-    return self.db.list_collections()
+      return self.db.list_collections()
+ 

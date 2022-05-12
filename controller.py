@@ -1,19 +1,22 @@
 import tkinter as tk
 from tkinter import Event, ttk
+import datetime
+import json
+import pandas as pd
 import traceback
 
 class Controller:
     def __init__(self, model, view):
-      self.model = model
-      self.view = view
-      self.view.option_menu.bind('<Button>', self.handle_option_selected)
-      self.view.btn_go['state'] = tk.DISABLED
-      self.view.btn_go.bind('<Button>', self.handle_go_button_clicked)
-      self.view.tree_view.bind('<Double-1>', self.handle_double_click)
-      self.view.btn_sqt['state'] = tk.DISABLED
-      self.view.btn_sqt.bind('<Button>', self.add_data_to_plot) 
-      # Hide widgets until show widgets called
-      self.remove_widgets()        
+        self.model = model
+        self.view = view
+        self.view.option_menu.bind('<Button>', self.handle_option_selected)
+        self.view.btn_go['state'] = tk.DISABLED
+        self.view.btn_go.bind('<Button>', self.handle_go_button_clicked)
+        self.view.tree_view.bind('<Double-1>', self.handle_double_click)
+        self.view.btn_sqt['state'] = tk.DISABLED
+        self.view.btn_sqt.bind('<Button>', self.add_data_to_plot) 
+        # Hide widgets until show widgets called
+        self.remove_widgets()        
 
     def handle_option_selected(self, *args):
         btn_state = self.view.btn_go.state()
@@ -68,18 +71,18 @@ class Controller:
         self.show_widgets(html_text)
 
     def scrape(self, pj_type):
-      """
-      Save the email
-      :param email:
-      :return:
-      """
-      try:
-        # scrape the model
-        self.model.pj_type = pj_type
-        return self.model.scrape()
-      except:
-        # show an error message
-        traceback.print_exc()
+        """
+        Save the email
+        :param email:
+        :return:
+        """
+        try:
+          # scrape the model
+          self.model.pj_type = pj_type
+          return self.model.scrape()
+        except:
+          # show an error message
+          traceback.print_exc()
 
     def remove_widgets(self):
         self.view.html_label.grid_remove()   
@@ -88,6 +91,8 @@ class Controller:
         self.view.lbl_sqt.grid_remove()
         self.view.entry_sqt.grid_remove()
         self.view.btn_sqt.grid_remove()
+        for item in self.view.canvas.get_tk_widget().find_all():
+           self.view.canvas.get_tk_widget().delete(item)
 
     def show_widgets(self, html_text: str):
         if html_text.find('ConnectionResetError([54,104]') == -1: # no weired connection error
@@ -105,27 +110,38 @@ class Controller:
                 self.view.btn_sqt['state'] = tk.NORMAL
             else:
                 self.view.btn_sqt['state'] = tk.DISABLED
-
-    def load_wod_data(self):
-      try:
-        clx = self.model.get_collections()
-        print(clx)
-        #TODO: matplotlib
-      except:
-        traceback.print_exc()
-
-    def add_doc_to_db(self) -> bool:
-      try:
-        result = False
-        date = self.view.get_input_date()
-        sqt = self.view.get_input_sqt()
-        doc = {'date': date, 'five_rm_sqt': sqt}
-        if sqt != '':
-          result = self.model.insert_doc(doc)
-          return result.acknowledged
-      except:
-        traceback.print_exc()
     
     def add_data_to_plot(self, *args):
       if result := self.add_doc_to_db():
-        self.load_wod_data()
+        self.load_data_to_df()
+
+    def add_doc_to_db(self) -> bool:
+        try:
+          result = False
+          date = self.view.get_input_date()
+          # Need to use the datetime.combine method
+          # pymongo does not accept date-encoded
+          date_time = datetime.datetime.combine(date, datetime.time())
+          sqt = self.view.get_input_sqt()
+          doc = {'date': date_time, 'five_rm_sqt': sqt}
+          if sqt != '':
+            result = self.model.insert_doc(doc)
+            return result.acknowledged
+        except:
+          traceback.print_exc()
+    
+    def load_data_to_df(self):
+        try:
+          # if we don't want to include id then pass _id:0
+          query = {'_id': 0, 'date': 1, 'five_rm_sqt': 1} 
+          #clx = self.model.get_collections()
+          clx = self.model.get_collection()
+          li = []
+          for x in clx.find({}, query): 
+            li.append(x)
+          df = pd.DataFrame(li)
+          df['date']= pd.to_datetime(df['date'], format="%Y,%m,%d %H:%M%z")
+          df=df.set_index('date')
+          self.view.plot_wod_data(df)
+        except:
+          traceback.print_exc()
