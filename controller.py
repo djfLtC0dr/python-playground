@@ -114,16 +114,18 @@ class Controller:
       except:
         traceback.print_exc()
 
-    def add_doc_to_db(self):
+    def add_doc_to_db(self) -> bool:
       try:
+        result = False
         date = self.view.get_input_date()
         sqt = self.view.get_input_sqt()
         doc = {'date': date, 'five_rm_sqt': sqt}
         if sqt != '':
-          self.model.insert_doc(doc)
+          result = self.model.insert_doc(doc)
+          return result.acknowledged
       except:
         traceback.print_exc()
     
     def add_data_to_plot(self, *args):
-      self.add_doc_to_db()
-      self.load_wod_data()
+      if result := self.add_doc_to_db():
+        self.load_wod_data()

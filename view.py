@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import Event, ttk
+from tkinter import ttk
 from tkhtmlview import HTMLLabel
 from tkcalendar import DateEntry
 from wod import PushJerk
@@ -42,11 +42,11 @@ class View(ttk.Frame):
 
         # Calendar Label
         self.lbl_dt = ttk.Label(self, text='Choose date:', width=11)
-        self.lbl_dt.grid(row=3, column=0, sticky=tk.W)
+        self.lbl_dt.grid(row=3, column=0, padx=10,pady=5, sticky=tk.E)
 
         # Calendar
         self.cal = DateEntry(self, width=10, cursor='hand1')        
-        self.cal.grid(row=3, column=1, padx=5, sticky=tk.W)
+        self.cal.grid(row=3, column=1, padx=20, pady=5, sticky=tk.W)
     
         # Squat Label
         self.lbl_sqt = ttk.Label(self, text='Enter 5RM Squat:', width=17)
