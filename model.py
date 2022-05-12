@@ -5,7 +5,7 @@ import json
 class Model:
   def __init__(self, pj_type):
     self.pj_type = pj_type
-    self._db = MongoDB
+    self.db = MongoDB
 
   @property
   def pj_type(self):
@@ -27,16 +27,7 @@ class Model:
     return pj_wods_json
 
   def get_collections(self):
-    return self._db.collections()
+    return self.db.get_collections(self)
 
   def insert_doc(self, doc):
-    self._db.insert_doc(doc)
-       
-
-    #TODO: def save(self):
-        # """
-        # Save the email into a file
-        # :return:
-        # """
-        # with open('emails.txt', 'a') as f:
-        #     f.write(self.email + '\n')
+    self.db.insert_doc(self, doc=doc)
