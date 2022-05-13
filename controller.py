@@ -1,7 +1,5 @@
 import tkinter as tk
-from tkinter import Event, ttk
 import datetime
-import json
 import pandas as pd
 import traceback
 
@@ -32,10 +30,6 @@ class Controller:
         self.remove_widgets()    
 
     def handle_go_button_clicked(self, *args):
-        """
-        Handle button click event
-        :return:
-        """
         pj_type_selected = self.view.pj_type_var.get()
         children = self.view.tree_view.get_children()
         if len(children) > 1:
@@ -71,11 +65,6 @@ class Controller:
         self.show_widgets(html_text)
 
     def scrape(self, pj_type):
-        """
-        Save the email
-        :param email:
-        :return:
-        """
         try:
           # scrape the model
           self.model.pj_type = pj_type
@@ -95,7 +84,7 @@ class Controller:
            self.view.canvas.get_tk_widget().delete(item)
 
     def show_widgets(self, html_text: str):
-        if html_text.find('ConnectionResetError([54,104]') == -1: # no weired connection error
+        if html_text.find('ConnectionResetError([54,104]') == -1: # no web server connection error
             self.view.html_label.grid()
             self.view.lbl_dt.grid()
             self.view.cal.grid()

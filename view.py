@@ -5,7 +5,6 @@ from tkcalendar import DateEntry
 from wod import PushJerk
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from matplotlib.figure import Figure
 
 class View(ttk.Frame):
     def __init__(self, parent):
@@ -28,8 +27,7 @@ class View(ttk.Frame):
 
         self.option_menu = ttk.OptionMenu(self, self.pj_type_var, *PushJerk.TYPES.values())
         self.option_menu.grid(column=1, row=1, padx=5, pady=10,  sticky=tk.W)    
-        #self.option_menu.grid(row=1, column=1, sticky=tk.NSEW)
-
+   
         # go button
         self.btn_go = ttk.Button(self, text='Get WODs')
         self.btn_go.grid(row=1, column=3, padx=10, sticky=tk.W)
@@ -54,12 +52,13 @@ class View(ttk.Frame):
         # Squat Label
         self.lbl_sqt = ttk.Label(self, text='Enter 5RM Squat:', width=17)
         self.lbl_sqt.grid(row=3, column=3, sticky=tk.W)
-        # Squat Entry
-        # declaring string variable for storing entry
+
+        # Squat Entry declaring string variable for storing entry
         self.sqt_var = tk.StringVar(self)
         vcmd = self.register(self.validate_digits_only)
         self.entry_sqt = ttk.Entry(self, width=3, textvariable=self.sqt_var, validate='key', validatecommand=(vcmd, '%P'))
         self.entry_sqt.grid(row=3, column=3, sticky=tk.E)        
+
         # Squat Save
         self.btn_sqt = ttk.Button(self, text='Save', width=5)
         self.btn_sqt.grid(row=3, column=4, sticky=tk.E)
@@ -73,11 +72,6 @@ class View(ttk.Frame):
         self.canvas.draw()
 
     def set_controller(self, controller):
-        """
-        Set the controller
-        :param controller:
-        :return:
-        """
         self.controller = controller
 
     def validate_digits_only(self, P) -> bool:
@@ -86,21 +80,22 @@ class View(ttk.Frame):
                 v = int(P)
                 if v < 0 or v > 999:
                     raise ValueError
-                else:
-                    # self.enable_save()
-                    self.btn_sqt.config(state=(tk.NORMAL if P else tk.DISABLED))
+                else:                    
+                    self.set_btn_state(P)
                     return True                    
             else:
                 v = str(P)
                 if v != "\x08" and v != '':
                     return False
-                else:
-                    # self.enable_save()
-                    self.btn_sqt.config(state=(tk.NORMAL if P else tk.DISABLED))
+                else:                    
+                    self.set_btn_state(P)
                     return True
         except ValueError as ve:
             print(ve)
             return False
+
+    def set_btn_state(self, P):
+        self.btn_sqt.config(state=(tk.NORMAL if P else tk.DISABLED))
 
     def get_input_date(self):
         return self.cal.get_date()
@@ -111,7 +106,7 @@ class View(ttk.Frame):
     def plot_wod_data(self, df):
         #plt.figure(figsize=(12.5,4.5))
         plt.title('Texas Method Squat Evolution')
-        plt.xlabel('date')
-        plt.ylabel('five_rm_sqt ')
+        plt.xlabel('Date')
+        plt.ylabel('5RM Sqt')
         plt.plot(df.five_rm_sqt)
         plt.show()

@@ -1,12 +1,13 @@
+from dotenv import load_dotenv
 from wod import PushJerk
 import os
 import pymongo
 from pymongo import MongoClient
-import dns
 import json
 
 class Model:
   def __init__(self, pj_type):
+    load_dotenv() 
     self.pj_type = pj_type
     # Set the connection string
     self._cnx_string = os.environ["CNX_STRING_1"] + os.environ["DB_USERNAME"] + ":" + os.environ["DB_PWD"] + os.environ["CNX_STRING_2"] + os.environ["DB_NAME"] + os.environ["CNX_STRING_3"]
