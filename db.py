@@ -2,7 +2,7 @@ from dotenv import load_dotenv
 import os
 import pymongo
 from pymongo import MongoClient
-import dns
+# import dns
 
 class MongoDB: 
     load_dotenv() 
@@ -36,7 +36,10 @@ class MongoDB:
     # Delete docs from collection
     def delete_doc(self, doc_id:int = 0):
         db = MongoDB.cnx.get_database()
-        clx = db.get_collection('clx_wods')      
-        query = {'_id': doc_id} 
-        d = clx.delete_many(clx.find({}, query))
+        clx = db.get_collection('clx_wods')  
+        if doc_id == 1: # delete_one
+          query = db.clx.find({'_id': doc_id})
+        else: # delete_all
+          query = {}
+        d = clx.delete_many(query)
         return d.deleted_count

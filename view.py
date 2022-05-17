@@ -3,8 +3,8 @@ from tkinter import ttk
 from tkhtmlview import HTMLLabel
 from tkcalendar import DateEntry
 from wod import PushJerk
-import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.figure import Figure
 
 class View(ttk.Frame):
     def __init__(self, parent):
@@ -64,12 +64,11 @@ class View(ttk.Frame):
         self.btn_sqt.grid(row=3, column=4, sticky=tk.E)
 
         # Plot
-        fig=plt.figure(figsize=(4,4))
-        #ax=fig.add_axes([0.1,0.1,0.8,0.8],polar=True)
-        #self.canvas = tk.Canvas(self, fig) #, master=self)
-        self.canvas=FigureCanvasTkAgg(fig,master=self)
+        self.fig = Figure(figsize=(4,5), dpi=100) 
+        self.canvas=FigureCanvasTkAgg(self.fig,master=self)
         self.canvas.get_tk_widget().grid(row=4,column=0, columnspan=4, pady=20)     
-        self.canvas.draw()
+        
+        # self.canvas.draw()
 
     def set_controller(self, controller):
         self.controller = controller
@@ -102,11 +101,4 @@ class View(ttk.Frame):
     
     def get_input_sqt(self):
         return self.sqt_var.get()
-
-    def plot_wod_data(self, df):
-        #plt.figure(figsize=(12.5,4.5))
-        plt.title('Texas Method Squat Evolution')
-        plt.xlabel('Date')
-        plt.ylabel('5RM Sqt')
-        plt.plot(df.five_rm_sqt)
-        plt.show()
+        

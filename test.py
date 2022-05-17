@@ -1,9 +1,6 @@
 
 import unittest
 import datetime
-# from dotenv import load_dotenv
-# load_dotenv()
-# This is the class we want to test. So, we need to import it
 from db import MongoDB
 from pymongo import MongoClient
 
@@ -62,10 +59,9 @@ class Test(unittest.TestCase):
         print("\nFinish get_collection test\n")
 
     def test_5_delete_docs(self):
-        print("\nStart delete_docs test\n")
-        clx = self.mongo.get_collection(self)
+        print("\nStart delete_docs test\n")        
         # delete all docs
-        deleted_count = self.mongo.delete_doc(self, 1)
+        deleted_count = self.mongo.delete_doc(self)
         self.assertGreater(deleted_count, 0)
         print(f'Deleted {deleted_count} docs')
         self.mongo.cnx.close()

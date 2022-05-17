@@ -1,6 +1,8 @@
 import tkinter as tk
 import datetime
+import matplotlib.pyplot as plt
 import pandas as pd
+import numpy as np
 import traceback
 
 class Controller:
@@ -102,7 +104,7 @@ class Controller:
     
     def add_data_to_plot(self, *args):
       if result := self.add_doc_to_db():
-        self.load_data_to_df()
+        self.load_data_to_plot()
 
     def add_doc_to_db(self) -> bool:
         try:
@@ -119,7 +121,7 @@ class Controller:
         except:
           traceback.print_exc()
     
-    def load_data_to_df(self):
+    def load_data_to_plot(self):
         try:
           # if we don't want to include id then pass _id:0
           query = {'_id': 0, 'date': 1, 'five_rm_sqt': 1} 
@@ -129,8 +131,35 @@ class Controller:
           for x in clx.find({}, query): 
             li.append(x)
           df = pd.DataFrame(li)
-          df['date']= pd.to_datetime(df['date'], format="%Y,%m,%d %H:%M%z")
-          df=df.set_index('date')
-          self.view.plot_wod_data(df)
+          df['date']= pd.to_datetime(df['date'], format="%Y,%m,%d%z")
+          df['five_rm_sqt']=pd.to_numeric(df['five_rm_sqt'])
+          self.view_data_subplot(df)
+        #   print(df.head(10))
         except:
           traceback.print_exc()
+
+    def view_data_subplot(self, df):
+        try:
+        # TODO fix redraw so doesn't draw over plot
+        #   for item in self.view.canvas.get_tk_widget().find_all():
+        #       self.view.canvas.get_tk_widget().delete(item)            
+          # Divide the figure into a 1x1 grid & give me the first section
+          ax = self.view.fig.add_subplot(111)
+          ax.set_title('Texas Method Squat Evolution')
+          ax.set_xlabel('Date')
+          ax.set_ylabel('5RM Sqt')          
+          df.groupby(df['date']).plot(kind = 'scatter', x='date', y='five_rm_sqt', ax=ax, color = 'red')
+          # ax.set_xticklabels(ax.get_xticks(), rotation = 45) 
+          # fixing set_xticklabels with "set_ticks & set_ticklabels" to eliminate UserWarning: FixedFormatter Warning
+          # unique values in column 'date'
+          x_tick_label_list = np.unique(df['date'].dt.strftime('%Y-%m-%d'))
+          num_elements = len(x_tick_label_list)
+          x_tick_list = []
+          for item in range (0,num_elements):
+            x_tick_list.append(x_tick_label_list[item])
+          ax.xaxis.set_ticks(x_tick_list) 
+          ax.xaxis.set_ticklabels(x_tick_label_list, rotation=90)   
+          self.view.canvas.draw_idle() 
+        except:
+          traceback.print_exc()
+       
