@@ -1,5 +1,6 @@
 import tkinter as tk
 import datetime
+from click import style
 import pandas as pd
 import numpy as np
 import traceback
@@ -81,8 +82,9 @@ class Controller:
         self.view.lbl_sqt.grid_remove()
         self.view.entry_sqt.grid_remove()
         self.view.btn_sqt.grid_remove()
-        for item in self.view.canvas.get_tk_widget().find_all():
-           self.view.canvas.get_tk_widget().delete(item)
+        self.view.fig.clear()  
+        # for item in self.view.canvas.get_tk_widget().find_all():
+        #    self.view.canvas.get_tk_widget().delete(item)
 
     def show_widgets(self, html_text: str):
         if html_text.find('ConnectionResetError([54,104]') == -1: # no web server connection error
@@ -112,8 +114,8 @@ class Controller:
           # Need to use the datetime.combine method
           # pymongo does not accept date-encoded
           date_time = datetime.datetime.combine(date, datetime.time())
-          sqt = self.view.get_input_sqt()
-          doc = {'date': date_time, 'five_rm_sqt': sqt}
+          sqt = int(self.view.get_input_sqt())
+          doc = {'date': date_time, 'cycle_type': self.model.pj_type, 'sqt': sqt}
           if sqt != '':
             result = self.model.insert_doc(doc)
             return result.acknowledged
@@ -123,14 +125,14 @@ class Controller:
     def load_data_to_plot(self):
         try:
           # if we don't want to include id then pass _id:0
-          query = {'_id': 0, 'date': 1, 'five_rm_sqt': 1} 
+          query = {'_id': 0, 'date': 1, 'cycle_type': 1, 'sqt': 1} 
           clx = self.model.get_collection()
           li = []
           for x in clx.find({}, query): 
             li.append(x)
           df = pd.DataFrame(li)
           df['date']= pd.to_datetime(df['date'], format="%Y,%m,%d%z")
-          df['five_rm_sqt']=pd.to_numeric(df['five_rm_sqt'])
+          df['sqt']=pd.to_numeric(df['sqt'])
           self.view_data_subplot(df)
         except:
           traceback.print_exc()
@@ -138,15 +140,21 @@ class Controller:
     def view_data_subplot(self, df):
         try:
         # TODO fix redraw so doesn't draw over plot
-        #   for item in self.view.canvas.get_tk_widget().find_all():
-        #       self.view.canvas.get_tk_widget().delete(item)            
+          self.view.fig.clear()       
           # Divide the figure into a 1x1 grid & give me the first section
           ax = self.view.fig.add_subplot(111)
-          ax.set_title('Texas Method Squat Evolution')
-          ax.set_xlabel('Date')
-          ax.set_ylabel('5RM Sqt')          
-          df.groupby(df['date']).plot(kind = 'scatter', x='date', y='five_rm_sqt', ax=ax, color = 'red')
-          # ax.set_xticklabels(ax.get_xticks(), rotation = 45) 
+          ax.set_title(self.model.pj_type + ' Squat Evolution', color='white')
+          ax.set_xlabel('Date', color='white')
+          ax.set_ylabel('Sqt', color='white')          
+          df.groupby(df['date']).plot(kind = 'scatter', x='date', y='sqt', ax=ax, color = 'red')
+          # set the colors to fit the them
+          ax.tick_params(axis='x', colors='white')
+          ax.tick_params(axis='y', colors='white')      
+          ax.set_facecolor('#333330')
+        #   ax.yaxis.label.set_color('white')
+        #   ax.xaxis.label.set_color('white')
+        #   ax.title.set_color('white')
+          # ax.set_xticklabels(ax.get_xticks(), rotation=45) 
           # fixing set_xticklabels with "set_ticks & set_ticklabels" to eliminate UserWarning: FixedFormatter Warning
           # unique values in column 'date'
           x_tick_label_list = np.unique(df['date'].dt.strftime('%Y-%m-%d'))

@@ -46,11 +46,11 @@ class View(ttk.Frame):
         self.lbl_dt.grid(row=3, column=0, padx=10,pady=5, sticky=tk.E)
 
         # Calendar
-        self.cal = DateEntry(self, width=10, cursor='hand1')        
+        self.cal = DateEntry(self, width=10, cursor='hand1', showweeknumbers=False, firstweekday='sunday')        
         self.cal.grid(row=3, column=1, padx=20, pady=5, sticky=tk.W)
     
         # Squat Label
-        self.lbl_sqt = ttk.Label(self, text='Enter 5RM Squat:', width=17)
+        self.lbl_sqt = ttk.Label(self, text='Enter Max Squat:', width=17)
         self.lbl_sqt.grid(row=3, column=3, sticky=tk.W)
 
         # Squat Entry declaring string variable for storing entry
@@ -64,9 +64,10 @@ class View(ttk.Frame):
         self.btn_sqt.grid(row=3, column=4, sticky=tk.E)
 
         # Plot
-        self.fig = Figure(figsize=(4,5), dpi=100) 
+        self.fig = Figure(figsize=(5,5), dpi=100) 
+        self.fig.patch.set_facecolor('#333330')
         self.canvas=FigureCanvasTkAgg(self.fig,master=self)
-        self.canvas.get_tk_widget().grid(row=4,column=0, columnspan=4, pady=20)     
+        self.canvas.get_tk_widget().grid(row=4,column=0, columnspan=5, pady=5)     
 
     def set_controller(self, controller):
         self.controller = controller

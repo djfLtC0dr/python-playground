@@ -11,25 +11,28 @@ class PushJerk:
 
   TYPES = {
   0 : '',
-  1 : 'Hatch',
+  1 : 'SmolovJr',
   2 : 'Juggernaut',
   3 : '7/13',
-  4 : 'Texas'
+  4 : 'TexasMethod',
+  5 : 'Hatch'
   }
   
   def __init__(self, pj_type):
-    _search_str = ''
-    if pj_type == 'Hatch':
-      _search_str = '12 – Hatch'
-    elif pj_type == 'Juggernaut':
-      _search_str = '/16: Inverted Juggernaut Method'
-    elif pj_type == '7/13':
-      _search_str = '(7/13'
-    elif pj_type == 'Texas':
-      _search_str = '(Texas'
-    _params = {"s": _search_str, "orderby": "pubDate", "order": 'ASC'}
-    self._rss_data = RssData(PushJerk.PJ_URL, pj_type, params=_params)
-    self.wods_json = self._rss_data.wods_json
+      _search_str = ''
+      if pj_type == 'SmolovJr':
+        _search_str = '(Smolov Jr.'
+      elif pj_type == 'Juggernaut':
+        _search_str = '/16: Inverted Juggernaut Method'
+      elif pj_type == '7/13':
+        _search_str = '(7/13'
+      elif pj_type == 'TexasMethod':
+        _search_str = '(Texas'
+      elif pj_type == 'Hatch':
+        _search_str = '12 – Hatch'      
+      _params = {"s": _search_str, "orderby": "pubDate", "order": 'ASC'}
+      self._rss_data = RssData(PushJerk.PJ_URL, pj_type, params=_params)
+      self.wods_json = self._rss_data.wods_json
 
 class Gpp:  
   TYPES = {
@@ -76,11 +79,11 @@ class MetCon(Workout):
   AEROBIC_CAPACITY, HI_INTENSITY_INTERVAL, STRENGTH_ENDURANCE, POWER_INTERVAL, TEMPO_INTERVAL_POWER_CAPACITY, MIXED_MODAL = range(6)
 
   def __init__(self, metcon_type, work: int, rest: int, intervals: int, *args, **kwargs):
-      self.metcon_type = metcon_type
-      self.work = work
-      self.rest = rest
-      self.intervals = intervals
-      super(MetCon, self).__init__(*args, **kwargs)
+    self.metcon_type = metcon_type
+    self.work = work
+    self.rest = rest
+    self.intervals = intervals
+    super(MetCon, self).__init__(*args, **kwargs)
 
 class Cycle:
   # date format

@@ -42,9 +42,10 @@ class MyTestCases(unittest.TestCase):
     # test insert_doc
     def test_3_insert_doc(self):
         print("Start insert_doc test\n")
-        date_time = datetime.datetime(2022, 5, 13, 0, 0)
-        sqt = '195'
-        doc = {'date': date_time, 'five_rm_sqt': sqt}
+        date_time = datetime.datetime(2022, 5, 11, 0, 0)
+        cycle_type = 'SmolovJr'
+        sqt = 275
+        doc = {'date': date_time, 'cycle_type': cycle_type, 'five_rm_sqt': sqt}
         result = self.mongo.insert_doc(self, doc)
         self.assertTrue(result.acknowledged)
         print(result.acknowledged)
