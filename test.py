@@ -5,7 +5,7 @@ from db import MongoDB
 from pymongo import MongoClient
 
 
-class Test(unittest.TestCase):
+class MyTestCases(unittest.TestCase):
     """
     The basic class that inherits unittest.TestCase
     """

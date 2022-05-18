@@ -67,8 +67,6 @@ class View(ttk.Frame):
         self.fig = Figure(figsize=(4,5), dpi=100) 
         self.canvas=FigureCanvasTkAgg(self.fig,master=self)
         self.canvas.get_tk_widget().grid(row=4,column=0, columnspan=4, pady=20)     
-        
-        # self.canvas.draw()
 
     def set_controller(self, controller):
         self.controller = controller

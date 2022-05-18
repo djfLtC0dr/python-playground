@@ -1,6 +1,5 @@
 import tkinter as tk
 import datetime
-import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 import traceback
@@ -125,7 +124,6 @@ class Controller:
         try:
           # if we don't want to include id then pass _id:0
           query = {'_id': 0, 'date': 1, 'five_rm_sqt': 1} 
-          #clx = self.model.get_collections()
           clx = self.model.get_collection()
           li = []
           for x in clx.find({}, query): 
@@ -134,7 +132,6 @@ class Controller:
           df['date']= pd.to_datetime(df['date'], format="%Y,%m,%d%z")
           df['five_rm_sqt']=pd.to_numeric(df['five_rm_sqt'])
           self.view_data_subplot(df)
-        #   print(df.head(10))
         except:
           traceback.print_exc()
 
