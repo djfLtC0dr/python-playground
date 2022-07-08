@@ -96,4 +96,28 @@ df_d5000 = pd.read_csv("d5000.csv", sep = ',')
 # plt.savefig("scatterplot_hr_so.png")
 
 '''Problem #6'''
+# Classification of eras is:
+# “19th Century” (up to the 1900 Season), 
+# “Dead Ball” (1901 through 1919), 
+# “Lively Ball” (1920 through 1941), 
+# “Integration” (1942 through 1960), 
+# “Expansion” (1961 through 1976), 
+# “Free Agency” (1977 through 1993), 
+# “Long Ball” (after 1993). 
+# Define the era a HoF as the era when he was at his mid-career 
+# (the average of his first and last seasons in baseball), 
+# use Python to divide the file ‘hofbatting.csv’ (containing all non-pitching HoF) 
+# into the appropriate era subsets.
+df_hof = pd.read_csv("hofbatting.csv", sep = ',')
+# print(df_hof.head())
 
+lst_mid_career_avg = df_hof[['From', 'To']].mean(axis=1).to_list()
+
+lst_yr_mid_career = []
+for i in lst_mid_career_avg:
+    lst_yr_mid_career.append(int(round(i)))
+# print(list_era)
+df_yr_mid_career = pd.DataFrame(lst_yr_mid_career, columns = ['yr_mid_career'])
+# print(df_yr_era)
+df_hof_mid_career = df_hof.assign(yr_mid_career=df_yr_mid_career['yr_mid_career'])
+print(df_hof_mid_career.head())
