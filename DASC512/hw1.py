@@ -88,3 +88,12 @@ spahn_mln_svar = stat.variance(df_bsn_mln.loc[df_bsn_mln['Tm'] == 'MLN']['ERA'])
 # fig.savefig("boxplot_spahn_bsn_mln.png")
 
 '''Problem #5'''
+# d5000.csv Create a scatterplot of the Home Runs versus the Strike Outs
+df_d5000 = pd.read_csv("d5000.csv", sep = ',')
+# print(df_d5000.head(20))
+#Using Seaborn to Scatterplot
+# sns.FacetGrid(df_d5000, hue='playerID', height=8).map(plt.scatter, 'HR', 'SO')
+# plt.savefig("scatterplot_hr_so.png")
+
+'''Problem #6'''
+
