@@ -120,4 +120,39 @@ for i in lst_mid_career_avg:
 df_yr_mid_career = pd.DataFrame(lst_yr_mid_career, columns = ['yr_mid_career'])
 # print(df_yr_era)
 df_hof_mid_career = df_hof.assign(yr_mid_career=df_yr_mid_career['yr_mid_career'])
-print(df_hof_mid_career.head())
+# print(df_hof_mid_career.head(30))
+# print('min_era => ', np.min(df_hof_mid_career['yr_mid_career']))
+
+bins = [1800, 1900, 1919, 1941, 1960, 1976, 1993, 2013]
+eras = ['19th Century', 'Dead Ball', 'Lively Ball', 'Integration', 
+        'Expansion', 'Free Agency', 'Long Ball']
+# print(df_hof_mid_career['yr_mid_career'].value_counts(bins=bins, sort=False))
+
+# create a dict of tuples representing the eras, timeframes, counts
+dict_eras = dict(zip(eras, df_hof_mid_career['yr_mid_career'].value_counts(bins=bins, sort=False)))
+# print(dict_eras)
+
+# ************Creating pie plot
+fig = plt.figure(figsize =(4, 5))
+values = df_hof_mid_career['yr_mid_career'].value_counts()
+# plt.pie(dict_eras.values(), labels = dict_eras.keys(), autopct= lambda x: '{:.0f}'.format(x*values.sum()/100))
+# plt.show()
+# plt.savefig("pieplot_hof_eras.png")
+
+# ************Creating Bar Plot
+plt.bar(*zip(*dict_eras.items()), color = list('rgbkymc'))
+plt.xticks(rotation='vertical')
+plt.tight_layout()
+# plt.show()
+# plt.savefig("barplot_hof_eras.png")
+
+# ************Creating Histogram
+# Creating histogram
+fig, ax = plt.subplots(1, 1,
+                        figsize =(5, 3),
+                        tight_layout = True)
+plt.xlabel("Eras by Year")
+plt.ylabel("Count")    
+plt.title("Mid-career values for HoF non-pitchers")                    
+hist_mid_career = ax.hist(df_hof_mid_career['yr_mid_career'], bins = bins)
+plt.savefig("hist_hof_mid-career.png")
