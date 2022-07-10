@@ -5,14 +5,15 @@ import pandas as pd
 import scipy.stats as stats
 import seaborn as sns
 import statistics as stat
+from pathlib import Path
 
-'''Problem #3 '''
-# list of responsible parties
-lst_responsible = ['InsCos', 'PharmCos', 'Govt', 'Hosp', 'Phys', 'Other', 'Unsure']
-  
-# list of respondants
-lst_nbr_responses = [869, 339, 338, 127, 85, 128, 23]
-  
+# function to check if a file exists 
+# args file name assumes in root of running dir
+def bool_file_exists(file:str) -> bool:
+    filesystem_path = Path(file)
+    return filesystem_path.is_file()
+
+'''Problem #3 '''  
 # function returns dict of rel freqs based on k,v pair
 # params are in form of {string: int}
 def compute_rel_freqs(dict:dict) -> dict:
@@ -22,20 +23,29 @@ def compute_rel_freqs(dict:dict) -> dict:
         relative[key] = dict[key] / total_count
     return relative
 
+# list of responsible parties
+lst_responsible = ['InsCos', 'PharmCos', 'Govt', 'Hosp', 'Phys', 'Other', 'Unsure']
+  
+# list of respondants
+lst_nbr_responses = [869, 339, 338, 127, 85, 128, 23]
+
 # create a dict of tuples representing the responsible parties
 # and corresponsding numer of responses
 dict_hc_cost = dict(zip(lst_responsible, lst_nbr_responses))
 
 dict_rel_freqs = compute_rel_freqs(dict_hc_cost)
 
-# bar plot of dict of rel_freqs
-# sns_barplot = sns.barplot(x = list(dict_rel_freqs.keys()), y = list(dict_rel_freqs.values()))
-# fig = sns_barplot.get_figure()
-# fig.savefig("barplot_rel_freqs.png") 
+# ************ bar plot of dict of rel_freqs
+sns_barplot = sns.barplot(x = list(dict_rel_freqs.keys()), y = list(dict_rel_freqs.values()))
+fig = sns_barplot.get_figure()
+barplot_rel_freqs_file = "barplot_rel_freqs.png"
+if bool_file_exists(barplot_rel_freqs_file) == False:
+    fig.savefig(barplot_rel_freqs_file) 
 
 ''' Problem #4 '''
 # Create a table of summary statistics for Spahn’s ERA. 
-# This table should include the Min, Q1, Median, Mean, Q3, Max, Sample Variance and Sample Standard Deviation
+# This table should include the Min, Q1, Median, Mean, Q3, 
+# Max, Sample Variance and Sample Standard Deviation
 df_spahn = pd.read_csv("spahn.csv", sep = ',')
 # print(df_spahn.head(20))
 # print(df_spahn['ERA'].describe())
@@ -83,17 +93,21 @@ spahn_mln_svar = stat.variance(df_bsn_mln.loc[df_bsn_mln['Tm'] == 'MLN']['ERA'])
 # print(mln_mean)
 # print(mln_median)
 # print(spahn_mln_svar)
-# sns_boxplot = sns.boxplot(x = 'Tm', y = 'ERA', data = df_bsn_mln)
-# fig = sns_boxplot.get_figure()
-# fig.savefig("boxplot_spahn_bsn_mln.png")
+sns_boxplot = sns.boxplot(x = 'Tm', y = 'ERA', data = df_bsn_mln)
+fig = sns_boxplot.get_figure()
+boxplot_spahn_bsn_mln_file = "boxplot_spahn_bsn_mln.png"
+if bool_file_exists(boxplot_spahn_bsn_mln_file) == False:
+    fig.savefig(boxplot_spahn_bsn_mln_file)
 
 '''Problem #5'''
 # d5000.csv Create a scatterplot of the Home Runs versus the Strike Outs
 df_d5000 = pd.read_csv("d5000.csv", sep = ',')
 # print(df_d5000.head(20))
-#Using Seaborn to Scatterplot
-# sns.FacetGrid(df_d5000, hue='playerID', height=8).map(plt.scatter, 'HR', 'SO')
-# plt.savefig("scatterplot_hr_so.png")
+# Using Seaborn to Scatterplot
+sns.FacetGrid(df_d5000, hue='playerID', height=8).map(plt.scatter, 'HR', 'SO')
+scatterplot_hr_so_file = "scatterplot_hr_so.png"
+if bool_file_exists(scatterplot_hr_so_file) == False:
+    plt.savefig(scatterplot_hr_so_file)
 
 '''Problem #6'''
 # Classification of eras is:
@@ -109,6 +123,9 @@ df_d5000 = pd.read_csv("d5000.csv", sep = ',')
 # use Python to divide the file ‘hofbatting.csv’ (containing all non-pitching HoF) 
 # into the appropriate era subsets.
 df_hof = pd.read_csv("hofbatting.csv", sep = ',')
+# print(df_hof.head())
+# rename the unnamed column to something useful
+df_hof.rename(columns = {'Unnamed: 1':'Inductee'}, inplace = True)
 # print(df_hof.head())
 
 lst_mid_career_avg = df_hof[['From', 'To']].mean(axis=1).to_list()
@@ -135,16 +152,20 @@ dict_eras = dict(zip(eras, df_hof_mid_career['yr_mid_career'].value_counts(bins=
 # ************Creating pie plot
 fig = plt.figure(figsize =(4, 5))
 values = df_hof_mid_career['yr_mid_career'].value_counts()
-# plt.pie(dict_eras.values(), labels = dict_eras.keys(), autopct= lambda x: '{:.0f}'.format(x*values.sum()/100))
+plt.pie(dict_eras.values(), labels = dict_eras.keys(), autopct= lambda x: '{:.0f}'.format(x*values.sum()/100))
 # plt.show()
-# plt.savefig("pieplot_hof_eras.png")
+pieplot_hof_eras_file = "pieplot_hof_eras.png"
+if bool_file_exists(pieplot_hof_eras_file) == False:
+    plt.savefig(pieplot_hof_eras_file)
 
 # ************Creating Bar Plot
 plt.bar(*zip(*dict_eras.items()), color = list('rgbkymc'))
 plt.xticks(rotation='vertical')
 plt.tight_layout()
 # plt.show()
-# plt.savefig("barplot_hof_eras.png")
+barplot_hof_eras_file = "barplot_hof_eras.png"
+if bool_file_exists(barplot_hof_eras_file) == False:
+    plt.savefig(barplot_hof_eras_file)
 
 # ************Creating Histogram
 # Creating histogram
@@ -155,4 +176,22 @@ plt.xlabel("Eras by Year")
 plt.ylabel("Count")    
 plt.title("Mid-career values for HoF non-pitchers")                    
 hist_mid_career = ax.hist(df_hof_mid_career['yr_mid_career'], bins = bins)
-plt.savefig("hist_hof_mid-career.png")
+hist_hof_mid_career_file = "hist_hof_mid-career.png"
+if bool_file_exists(hist_hof_mid_career_file) == False:
+    plt.savefig(hist_hof_mid_career_file)
+
+# Create a scatterplot of the OBP vs. SLG. 
+# Are there any outliers (id by name if so), 
+# is there a relationship between OBP and SLG?
+# ************Using Seaborn to Scatterplot
+good_obp = 0.45
+good_slg_pct = 0.6
+condition1 = (df_hof['OBP'] >= good_obp) & (df_hof['SLG'] <= good_slg_pct)
+outliers = np.extract(condition1, df_hof['Inductee'])
+df_hof['outliers'] = condition1.map({False: "not outlier", True: "outlier " + outliers[0]})
+# print(outliers)
+scatter_obp_slg = sns.FacetGrid(df_hof, hue='outliers', height=4).map(plt.scatter, 'OBP', 'SLG')
+scatter_obp_slg.add_legend()
+scatterplot_obp_slg_file = "scatterplot_obp_slg.png"
+if bool_file_exists(scatterplot_obp_slg_file) == False:
+    plt.savefig(scatterplot_obp_slg_file)
