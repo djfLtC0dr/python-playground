@@ -6,6 +6,7 @@ import scipy.stats as stats
 import seaborn as sns
 import statistics as stat
 from pathlib import Path
+from scipy.stats import zscore
 
 # function to check if a file exists 
 # args file name assumes in root of running dir
@@ -186,12 +187,29 @@ if bool_file_exists(hist_hof_mid_career_file) == False:
 # ************Using Seaborn to Scatterplot
 good_obp = 0.45
 good_slg_pct = 0.6
-condition1 = (df_hof['OBP'] >= good_obp) & (df_hof['SLG'] <= good_slg_pct)
-outliers = np.extract(condition1, df_hof['Inductee'])
-df_hof['outliers'] = condition1.map({False: "not outlier", True: "outlier " + outliers[0]})
+outlier_condition = (df_hof['OBP'] >= good_obp) & (df_hof['SLG'] <= good_slg_pct)
+outliers = np.extract(outlier_condition, df_hof['Inductee'])
+df_hof['outliers'] = outlier_condition.map({False: "not outlier", True: "outlier " + outliers[0]})
 # print(outliers)
 scatter_obp_slg = sns.FacetGrid(df_hof, hue='outliers', height=4).map(plt.scatter, 'OBP', 'SLG')
 scatter_obp_slg.add_legend()
 scatterplot_obp_slg_file = "scatterplot_obp_slg.png"
 if bool_file_exists(scatterplot_obp_slg_file) == False:
     plt.savefig(scatterplot_obp_slg_file)
+
+# Calculate the zscore of OPS and drop zscores into new column
+df_hof_mid_career['ops_zscore'] = stats.zscore(df_hof_mid_career['OPS'])
+
+# Create a scatterplot of the normalized OPS versus the Mid-Career variable. 
+# Identify any outliers (by name as well).
+stdev_above_mean = 3.0
+stdev_below_mean = -3.0
+outlier_condition = (df_hof_mid_career['ops_zscore'] >= stdev_above_mean) | (df_hof_mid_career['ops_zscore'] <= stdev_below_mean)
+outliers = np.extract(outlier_condition, df_hof['Inductee'])
+print(outliers)
+df_hof_mid_career['outliers'] = outlier_condition.map({False: "not outlier", True: "outlier"})
+scatter_zops_mid_career = sns.FacetGrid(df_hof_mid_career, hue='outliers', height=4).map(plt.scatter, 'ops_zscore', 'yr_mid_career')
+scatter_zops_mid_career.add_legend()
+scatterplot_zops_mid_career_file = "scatter_zops_mid_career.png"
+if bool_file_exists(scatterplot_zops_mid_career_file) == False:
+    plt.savefig(scatterplot_zops_mid_career_file)
