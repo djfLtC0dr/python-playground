@@ -141,19 +141,21 @@ df_hof_mid_career = df_hof.assign(yr_mid_career=df_yr_mid_career['yr_mid_career'
 # print(df_hof_mid_career.head(30))
 # print('min_era => ', np.min(df_hof_mid_career['yr_mid_career']))
 
-bins = [1800, 1900, 1919, 1941, 1960, 1976, 1993, 2013]
-eras = ['19th Century', 'Dead Ball', 'Lively Ball', 'Integration', 
+eras_yr_ranges = [1800, 1900, 1919, 1941, 1960, 1976, 1993]
+eras_classification = ['19th Century', 'Dead Ball', 'Lively Ball', 'Integration', 
         'Expansion', 'Free Agency', 'Long Ball']
 # print(df_hof_mid_career['yr_mid_career'].value_counts(bins=bins, sort=False))
 
 # create a dict of tuples representing the eras, timeframes, counts
-dict_eras = dict(zip(eras, df_hof_mid_career['yr_mid_career'].value_counts(bins=bins, sort=False)))
+dict_eras = dict(zip(eras_classification, df_hof_mid_career['yr_mid_career']
+.value_counts(bins=eras_yr_ranges, sort=False)))
 # print(dict_eras)
 
 # ************Creating pie plot
 fig = plt.figure(figsize =(4, 5))
 values = df_hof_mid_career['yr_mid_career'].value_counts()
-plt.pie(dict_eras.values(), labels = dict_eras.keys(), autopct= lambda x: '{:.0f}'.format(x*values.sum()/100))
+plt.pie(dict_eras.values(), labels = dict_eras.keys(), 
+autopct= lambda x: '{:.0f}'.format(x*values.sum()/100))
 # plt.show()
 pieplot_hof_eras_file = "pieplot_hof_eras.png"
 if bool_file_exists(pieplot_hof_eras_file) == False:
@@ -176,7 +178,7 @@ fig, ax = plt.subplots(1, 1,
 plt.xlabel("Eras by Year")
 plt.ylabel("Count")    
 plt.title("Mid-career values for HoF non-pitchers")                    
-hist_mid_career = ax.hist(df_hof_mid_career['yr_mid_career'], bins = bins)
+hist_mid_career = ax.hist(df_hof_mid_career['yr_mid_career'], bins = eras_yr_ranges)
 hist_hof_mid_career_file = "hist_hof_mid-career.png"
 if bool_file_exists(hist_hof_mid_career_file) == False:
     plt.savefig(hist_hof_mid_career_file)
@@ -205,11 +207,28 @@ df_hof_mid_career['ops_zscore'] = stats.zscore(df_hof_mid_career['OPS'])
 stdev_above_mean = 3.0
 stdev_below_mean = -3.0
 outlier_condition = (df_hof_mid_career['ops_zscore'] >= stdev_above_mean) | (df_hof_mid_career['ops_zscore'] <= stdev_below_mean)
-outliers = np.extract(outlier_condition, df_hof['Inductee'])
-print(outliers)
+outliers = np.extract(outlier_condition, df_hof_mid_career['Inductee'])
+# print(outliers)
 df_hof_mid_career['outliers'] = outlier_condition.map({False: "not outlier", True: "outlier"})
 scatter_zops_mid_career = sns.FacetGrid(df_hof_mid_career, hue='outliers', height=4).map(plt.scatter, 'ops_zscore', 'yr_mid_career')
 scatter_zops_mid_career.add_legend()
-scatterplot_zops_mid_career_file = "scatter_zops_mid_career.png"
+scatterplot_zops_mid_career_file = "scatterplot_zops_mid_career.png"
 if bool_file_exists(scatterplot_zops_mid_career_file) == False:
     plt.savefig(scatterplot_zops_mid_career_file)
+
+# Create a Box-Plot for the home-run rate (HR/AB) of HoF during each ERA 
+# (should have 7 box- plots). Also, contruct a table with calculations:
+# Mean, Median, Min, Max, Range, and Sample StDev for the (HR/AB) for each Era.
+def hr_rate(df:pd.DataFrame) -> float:
+    return df['HR']/df['AB']
+
+df_hof_hr_rate = df_hof_mid_career.assign(hr_rate = df_hof_mid_career.apply(lambda x: hr_rate(x), axis=1))
+# print(df_hof_hr_rate)
+df_19_century = df_hof_hr_rate.query('yr_mid_career <= 1900').copy()
+df_dead = df_hof_hr_rate.query('yr_mid_career > 1900 & yr_mid_career <= 1919').copy()
+df_lively = df_hof_hr_rate.query('yr_mid_career >= 1921 & yr_mid_career <= 1941').copy()
+df_int = df_hof_hr_rate.query('yr_mid_career >= 1942 & yr_mid_career <= 1960').copy()
+df_exp = df_hof_hr_rate.query('yr_mid_career >= 1961 & yr_mid_career <= 1976').copy()
+df_free = df_hof_hr_rate.query('yr_mid_career >= 1977 & yr_mid_career <= 1993').copy()
+df_long = df_hof_hr_rate.query('yr_mid_career > 1993').copy()
+print(df_long)
