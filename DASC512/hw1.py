@@ -250,7 +250,7 @@ boxplots_hof_eras_hr_rates_file = "boxplots_hof_eras_hr_rates.png"
 if bool_file_exists(boxplots_hof_eras_hr_rates_file) == False:
     plt.savefig(boxplots_hof_eras_hr_rates_file)
 
-# TODO: Contruct a table with calculations:
+# Contruct a table with calculations:
 # Mean, Median, Min, Max, Range, and Sample StDev for the (HR/AB) for each Era.
 # Era means
 mean_19_century = np.mean(df_19_century['hr_rate'])
