@@ -172,9 +172,7 @@ if bool_file_exists(barplot_hof_eras_file) == False:
 
 # ************Creating Histogram
 # Creating histogram
-fig, ax = plt.subplots(1, 1,
-                        figsize =(5, 3),
-                        tight_layout = True)
+fig, ax = plt.subplots(1, 1, figsize =(5, 3), tight_layout = True)
 plt.xlabel("Eras by Year")
 plt.ylabel("Count")    
 plt.title("Mid-career values for HoF non-pitchers")                    
@@ -217,8 +215,7 @@ if bool_file_exists(scatterplot_zops_mid_career_file) == False:
     plt.savefig(scatterplot_zops_mid_career_file)
 
 # Create a Box-Plot for the home-run rate (HR/AB) of HoF during each ERA 
-# (should have 7 box- plots). Also, contruct a table with calculations:
-# Mean, Median, Min, Max, Range, and Sample StDev for the (HR/AB) for each Era.
+# (should have 7 box- plots).
 def hr_rate(df:pd.DataFrame) -> float:
     return df['HR']/df['AB']
 
@@ -231,4 +228,27 @@ df_int = df_hof_hr_rate.query('yr_mid_career >= 1942 & yr_mid_career <= 1960').c
 df_exp = df_hof_hr_rate.query('yr_mid_career >= 1961 & yr_mid_career <= 1976').copy()
 df_free = df_hof_hr_rate.query('yr_mid_career >= 1977 & yr_mid_career <= 1993').copy()
 df_long = df_hof_hr_rate.query('yr_mid_career > 1993').copy()
-print(df_long)
+
+# Setup all the subplots by respective df/axes
+fig, axes = plt.subplots(1, 7, figsize=(12,8), tight_layout = True)
+sns.boxplot(y = df_19_century['hr_rate'], ax = axes[0])
+sns.boxplot(y = df_dead['hr_rate'], ax = axes[1])
+sns.boxplot(y = df_lively['hr_rate'], ax = axes[2])
+sns.boxplot(y = df_int['hr_rate'], ax = axes[3])
+sns.boxplot(y = df_exp['hr_rate'], ax = axes[4])
+sns.boxplot(y = df_free['hr_rate'], ax = axes[5])
+sns.boxplot(y = df_long['hr_rate'], ax = axes[6])
+axes[0].set(xlabel='19')
+axes[1].set(xlabel='dead')
+axes[2].set(xlabel='lively')
+axes[3].set(xlabel='int')
+axes[4].set(xlabel='exp')
+axes[5].set(xlabel='free')
+axes[6].set(xlabel='long')
+# plt.show()
+boxplots_hof_eras_hr_rates_file = "boxplots_hof_eras_hr_rates.png"
+if bool_file_exists(boxplots_hof_eras_hr_rates_file) == False:
+    plt.savefig(boxplots_hof_eras_hr_rates_file)
+
+# TODO: Contruct a table with calculations:
+# Mean, Median, Min, Max, Range, and Sample StDev for the (HR/AB) for each Era.
