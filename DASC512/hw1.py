@@ -252,3 +252,95 @@ if bool_file_exists(boxplots_hof_eras_hr_rates_file) == False:
 
 # TODO: Contruct a table with calculations:
 # Mean, Median, Min, Max, Range, and Sample StDev for the (HR/AB) for each Era.
+# Era means
+mean_19_century = np.mean(df_19_century['hr_rate'])
+mean_dead = np.mean(df_dead['hr_rate'])
+mean_lively = np.mean(df_lively['hr_rate'])
+mean_int = np.mean(df_int['hr_rate'])
+mean_exp = np.mean(df_exp['hr_rate'])
+mean_free = np.mean(df_free['hr_rate'])
+mean_long = np.mean(df_long['hr_rate'])
+
+# Era medians
+median_19_century = np.median(df_19_century['hr_rate'])
+median_dead = np.median(df_dead['hr_rate'])
+median_lively = np.median(df_lively['hr_rate'])
+median_int = np.median(df_int['hr_rate'])
+median_exp = np.median(df_exp['hr_rate'])
+median_free = np.median(df_free['hr_rate'])
+median_long = np.median(df_long['hr_rate'])
+
+def format_six_sigfigs(number):
+    formatted_number = '{:.6f}'.format(number)
+    # print(formatted_number)
+    return formatted_number
+
+# Era mins
+min_19_century = format_six_sigfigs(np.min(df_19_century['hr_rate']))
+min_dead = format_six_sigfigs(np.min(df_dead['hr_rate']))
+min_lively = format_six_sigfigs(np.min(df_lively['hr_rate']))
+min_int = format_six_sigfigs(np.min(df_int['hr_rate']))
+min_exp = format_six_sigfigs(np.min(df_exp['hr_rate']))
+min_free = format_six_sigfigs(np.min(df_free['hr_rate']))
+min_long = format_six_sigfigs(np.min(df_long['hr_rate']))
+
+# Era maxs
+max_19_century = format_six_sigfigs(np.max(df_19_century['hr_rate']))
+max_dead = format_six_sigfigs(np.max(df_dead['hr_rate']))
+max_lively = format_six_sigfigs(np.max(df_lively['hr_rate']))
+max_int = format_six_sigfigs(np.max(df_int['hr_rate']))
+max_exp = format_six_sigfigs(np.max(df_exp['hr_rate']))
+max_free = format_six_sigfigs(np.max(df_free['hr_rate']))
+max_long = format_six_sigfigs(np.max(df_long['hr_rate']))
+
+# Era ranges
+range_19_century = (min_19_century, max_19_century)
+range_dead = (min_dead, max_dead)
+range_lively = (min_lively, max_lively)
+range_int = (min_int, max_int)
+range_exp = (min_exp, max_exp)
+range_free = (min_free, max_free)
+range_long = (min_long, max_long)
+
+# Era Sample Std Devs
+stdev_19_century = stat.stdev(df_19_century['hr_rate'])
+stdev_dead = stat.stdev(df_dead['hr_rate'])
+stdev_lively = stat.stdev(df_lively['hr_rate'])
+stdev_int = stat.stdev(df_int['hr_rate'])
+stdev_exp = stat.stdev(df_exp['hr_rate'])
+stdev_free = stat.stdev(df_free['hr_rate'])
+stdev_long = stat.stdev(df_long['hr_rate'])
+
+# Era Means Table
+era_means = {'Mean': [mean_19_century, mean_dead, mean_lively, mean_int,
+             mean_exp, mean_free, mean_long]}
+df_era_means = pd.DataFrame(data = era_means, index = eras_classification)
+
+# Era Medians Table
+era_medians = {'Median': [median_19_century, median_dead, median_lively,
+                median_int, median_exp, median_free, median_long]}
+df_era_medians = pd.DataFrame(data = era_medians, index = eras_classification)
+
+# Era Mins Table
+era_mins = {'Min': [min_19_century, min_dead, min_lively, min_int,
+            min_exp, min_free, min_long]}
+df_era_mins = pd.DataFrame(data = era_mins, index = eras_classification)
+
+# Era Maxs Table
+era_maxs = {'Max': [max_19_century, max_dead, max_lively, max_int,
+            max_exp, max_free, max_long]}
+df_era_maxs = pd.DataFrame(data = era_maxs, index = eras_classification)
+
+# Era Ranges Table
+era_ranges = {'Range': [range_19_century, range_dead, range_lively, range_int,
+                range_exp, range_free, range_long]}
+df_era_ranges = pd.DataFrame(data = era_ranges, index = eras_classification)
+
+# Era Sample Stdev Table
+era_stdev = {'StDev': [stdev_19_century, stdev_dead, stdev_lively,
+                stdev_int, stdev_exp, stdev_free, stdev_long]}
+df_era_stdev = pd.DataFrame(data = era_stdev, index = eras_classification)
+
+# Concat everything into one table by column
+df_hr_rate_era = pd.concat([df_era_means, df_era_medians, df_era_mins, df_era_maxs,
+                            df_era_ranges, df_era_stdev], axis=1)
