@@ -5,15 +5,21 @@ import pandas as pd
 import scipy.stats as stats
 import seaborn as sns
 import statistics as stat
+from scipy.stats import binom
 
 '''Problem 1'''
 # number of samples, probability of contamination
-n = 2 # n=1 for P(x = 1) n=5 for P(x = 5)
-p = .23 
-x = stats.binom(n, p)
-print(1 - x.cdf(1)) # p(x ≥ 2)
+x = 2
+x_minus_1 = x - 1
+p5 = (0.23)*(0.77)**x_minus_1
+# print(p5)
+# print(1 - x.cdf(1)) # p(x ≥ 2)
 # print(x.pmf(1)) # P(x = 1)
 # print(x.pmf(5)) # P(x = 5)
 
+x, p, n = 15, 0.8, 20
+prob = stats.binom.cdf(x, n, p)
+print(prob)
+# np.allclose(x, stats.binom.ppf(prob, n, p))
 
 
