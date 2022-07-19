@@ -45,12 +45,17 @@ t_crit = -stats.t.ppf(alpha, dof)
 print(t_stat, p_val, p_val_lower_tail, t_crit)
 
 if p_val_lower_tail <= alpha:
-    print('Conclusion: Since p-value(=%f)'%p_val_lower_tail,'<','alpha(=%.2f)'%alpha,'''We reject the null hypothesis H0. 
+    print('Conclusion: Since t_stat(=%f)'%t_stat,'<','t_crit(=%.2f)'%t_crit,'''We reject the null hypothesis H0. 
             So we conclude that there is no significant mean difference in RER 
             i.e., μ = 92 at %.2f level of significance'''%alpha)
 else:
-    print('Conclusion: Since p-value(=%f)'%p_val_upper_tail,'<','alpha(=%.2f)'%alpha,'' + '\n' +
+    print('Since t_stat(=%f)'%p_val_upper_tail,'>','t_crit(=%.2f)'%t_crit,'' + '\n' +
     'We fail to reject the null hypothesis H0.' + '\n' +
     'the mean value coffee NEN < 92')
-# Since t>tcrit, we fail to reject the null, the true value is greater than 98.  The p value of 97.1 indicates that the chance of observing a mean this extreme if the 
-# true value is greater than 98 is 97.1%
+
+'''Problem 1c diff in Mean Values'''
+print(np.std(placebo, ddof=1), np.std(caffeine, ddof=1))
+t_stat, p_val=stats.ttest_ind(placebo, caffeine, equal_var=False)
+t_crit=stats.t.ppf((1-alpha)/2,16)
+print(t_stat, p_val, t_crit)
+#Fail to reject the null, these means are statistically equal
