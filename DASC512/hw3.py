@@ -203,15 +203,15 @@ df_ba_nl = df_bavg.loc[df_bavg['League'] == 'National League']['BattingAvg']
 df_ba_al = df_bavg.loc[df_bavg['League'] == 'American League']['BattingAvg']
 print(np.std(df_ba_nl, ddof=1), np.std(df_ba_al, ddof=1))
 # out => 0.033159408525780996 0.03484792169158821
-# = stdev so need to use equal_var = True testing for zero order doesn't matter
-t_stat, p_val = stats.ttest_ind(df_ba_nl, df_ba_al, equal_var = True)
-print('t_stat=%.3f, p=%.3f' % (stat, p_val))
+# = stdev equal, checking for mean diff
+v_stat, p_val = stests.ztest(df_ba_nl, df_ba_al, value = 0)
+print('v_stat=%.3f, p=%.3f' % (stat, p_val))
 # interpret
 alpha = 0.05
 if p_val > alpha:
-	print('Same distributions (fail to reject H0)')
+	print('Same distributions (fail to reject H0) conclude similar avgs among leagues')
 else:
-	print('Different distributions (reject H0)')
+	print('Different distributions (reject H0) conclude different avgs b/t leagues.')
 
 '''Problem 7'''
 df_bt = pd.read_csv("BodyTemp.csv", sep = ',')
