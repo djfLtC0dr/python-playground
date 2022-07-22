@@ -151,7 +151,7 @@ mu, sigma = np.mean(df_bavg['BattingAvg']), np.std(df_bavg['BattingAvg'])
 # print('mu bat avg = ', mu)
 means = np.random.normal(mu, sigma, size)
 fig, (ax_box, ax_hist) = plt.subplots(2, sharex=True, 
-            gridspec_kw={"height_ratios": (.15, .85)}, figsize = (12, 8))
+            gridspec_kw={"height_ratios": (.15, .85)}, figsize = (6, 4))
 fig.tight_layout(pad = 3)
 fig.suptitle('Uniform CLT Boxplot & Histogram')
 # Create the bins and histogram
@@ -162,7 +162,6 @@ sns.histplot(data=means, ax=ax_hist, color = 'green', kde=True, stat="count", li
 x = np.linspace(0, 0.5, num=size)
 plt.plot(x, stats.norm.pdf(x, mu, sigma))
 sns.boxplot(data=means, ax=ax_box, color = 'darkgreen')
-#remember chi square didn't look normal until ~50-100
 fig, ax = plt.subplots(figsize=(6,4))
 fig.suptitle('QQ-Plot')
 fig.tight_layout(pad=3)
@@ -198,6 +197,71 @@ print(np.std(df_ba_nl, ddof=1), np.std(df_ba_al, ddof=1))
 # out => 0.033159408525780996 0.03484792169158821
 # = stdev so need to use equal_var = True testing for zero order doesn't matter
 t_stat, p_val = stats.ttest_ind(df_ba_nl, df_ba_al, equal_var = True)
+print('t_stat=%.3f, p=%.3f' % (stat, p_val))
+# interpret
+alpha = 0.05
+if p_val > alpha:
+	print('Same distributions (fail to reject H0)')
+else:
+	print('Different distributions (reject H0)')
+
+'''Problem 7'''
+df_bt = pd.read_csv("BodyTemp.csv", sep = ',')
+# Clean-up
+df_bt.drop('Unnamed: 2', axis=1, inplace=True)
+# print(df_bt.head())
+size = len(df_bt.index)
+# print('bavg length: ' + str(size))
+mu, sigma = np.mean(df_bt['BodyTemp']), np.std(df_bt['BodyTemp'])
+# print('mu bat avg = ', mu)
+means = np.random.normal(mu, sigma, size)
+fig, (ax_box, ax_hist) = plt.subplots(2, sharex=True, 
+            gridspec_kw={"height_ratios": (.15, .85)}, figsize = (6, 4))
+fig.tight_layout(pad = 3)
+fig.suptitle('Uniform CLT Boxplot & Histogram')
+# Create the bins and histogram
+sns.histplot(data=means, ax=ax_hist, color = 'green', kde=True, stat="count", linewidth=0)
+
+# Use scipy.stats implementation of the normal pdf
+# Plot the distribution curve
+x = np.linspace(0, 0.5, num=size)
+plt.plot(x, stats.norm.pdf(x, mu, sigma))
+sns.boxplot(data=means, ax=ax_box, color = 'darkgreen')
+fig, ax = plt.subplots(figsize=(6,4))
+fig.suptitle('QQ-Plot')
+fig.tight_layout(pad=3)
+pp = sm.ProbPlot(np.array(means), stats.norm, fit=True)
+qq = pp.qqplot(marker='.', ax=ax, markerfacecolor='darkorange', markeredgecolor='darkorange', alpha=0.8)
+sm.qqline(qq.axes[0], line='45', fmt='k--')
+# plt.show()
+stat, pval = stats.normaltest(means)
+print('Statistics=%.3f, p=%.3f' % (stat, pval))
+# interpret
+alpha = 0.05
+if pval > alpha:
+	print('Sample looks Normal (fail to reject H0)')
+else:
+	print('Sample does not look Normal (reject H0)')
+
+df_bt['BodyTemp'].describe()
+zstat, pval = stests.ztest(df_bt['BodyTemp'], x2=None, value=98.6)
+print('zstat=%.3f, p=%.3f' % (zstat, pval))
+if pval < alpha:
+  print("Null hyphothesis rejected , Alternative hyphothesis accepted")
+else:
+  print("Null hyphothesis accepted , Alternative hyphothesis rejected")
+
+# perform power analysis
+analysis = power.TTestIndPower()
+power = analysis.solve_power(power=None, effect_size=1, alpha=0.05, nobs1=10, ratio=1.0)
+print('Power: %.3f' % power)
+
+df_bt_male = df_bt.loc[df_bt['Gender'] == 'Male']['BodyTemp']
+df_bt_female = df_bt.loc[df_bt['Gender'] == 'Female']['BodyTemp']
+print(np.std(df_bt_male, ddof=1), np.std(df_bt_female, ddof=1))
+# out => TODO
+# = stdev so need to use equal_var = TODO testing for zero order doesn't matter
+t_stat, p_val = stats.ttest_ind(df_ba_nl, df_ba_al, equal_var = TODO)
 print('t_stat=%.3f, p=%.3f' % (stat, p_val))
 # interpret
 alpha = 0.05
