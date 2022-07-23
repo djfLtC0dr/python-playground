@@ -272,6 +272,15 @@ else:
 # perform power analysis
 power = analysis.solve_power(power=None, effect_size=1, alpha=alpha, nobs1=10, ratio=1.0)
 print('Power: %.3f' % power)
+sample_sizes = np.array(range(10, 50, 10))
+alphas = np.array([0.05, 0.10, 0.20])
+plt.style.use('seaborn')
+fig = plt.figure()
+ax = fig.add_subplot(1, 1, 1)
+fig = analysis.plot_power(
+    dep_var='alpha', nobs=sample_sizes,  
+    effect_size=1, alpha=alphas, ax=ax, 
+    title='Power of Independent Samples t-test\n$\\alpha$ = [0.05, 0.10, 0.20]')
 
 df_bt_male = df_bt.loc[df_bt['Gender'] == 'Male']['BodyTemp']
 df_bt_female = df_bt.loc[df_bt['Gender'] == 'Female']['BodyTemp']
@@ -293,3 +302,17 @@ else:
 # and want α = 0.1 and π = 0.8, how large of a sample should I collect?
 sample_size = analysis.solve_power(power=0.8, effect_size=1, alpha=0.1, nobs1=None, ratio=1.0)
 print('Sample Size: %.3f' % sample_size)
+
+# For effect sizes 0.5 ,0.8, and 1.0, construct a plot showing the effect 
+# that sample size will have on power for α = 0.1 (x axis 
+# should be sample size and y axis should be power).
+effect_sizes = np.array([0.5, 0.8, 1.0])
+sample_sizes = np.array(range(10, 100, 10))
+
+plt.style.use('seaborn')
+fig = plt.figure()
+ax = fig.add_subplot(1, 1, 1)
+fig = analysis.plot_power(
+    dep_var='nobs', nobs=sample_sizes,  
+    effect_size=effect_sizes, alpha=0.01, ax=ax, 
+    title='Power of Independent Samples t-test\n$\\alpha = 0.01$')
