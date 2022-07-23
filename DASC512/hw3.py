@@ -131,14 +131,19 @@ print('p-value for two-tailed run-time test is %f'%p_val)
 # and π = 0.90 determine the sample size required to test the hypothesis that 
 # µ ≥ 15 if the true value is µ = 14.8 or µ = 14.9.
 x1 = 15
-sigma = 0.5
+x1_stdev = 0.5
 alpha = 0.05
-# Margin or Error
-E = 14.9 - 14.8
-# Determine the z-critical value
-z_crit = stats.norm.ppf(1 - alpha)
-n = ((z_crit * sigma) / E)**2
-print(n)
+mu = 14.8
+pie = 0.90
+# feed zt_ind_solve_power 3 of the 4 parameters and it will solve for the missing param
+# in this case sample size. So "nobs" is what we're solving for.  
+# effect size in the case of 
+# mu = 14.8 is .2/.5 (calculated as (15 - 14.8)/stdev),
+# and power is given as 0.9.
+effect_size = (x1 - mu)/x1_stdev
+analysis = power.TTestIndPower()
+nobs = analysis.solve_power(power=pie, effect_size=effect_size, alpha=alpha, nobs1=None, ratio=1.0)
+print('NOBS: %.3f' % nobs)
 
 '''Problem 6'''
 df_bavg = pd.read_csv("BattingAverages.csv", sep = ',')
@@ -195,9 +200,8 @@ else:
   print("Null hyphothesis accepted , Alternative hyphothesis rejected")
 
 # perform power analysis
-analysis = power.TTestIndPower()
-power = analysis.solve_power(power=None, effect_size=1, alpha=0.05, nobs1=10, ratio=1.0)
-print('Power: %.3f' % power)
+pie = analysis.solve_power(power=None, effect_size=1, alpha=0.05, nobs1=10, ratio=1.0)
+print('Power: %.3f' % pie)
 
 df_ba_nl = df_bavg.loc[df_bavg['League'] == 'National League']['BattingAvg']
 df_ba_al = df_bavg.loc[df_bavg['League'] == 'American League']['BattingAvg']
@@ -270,8 +274,8 @@ else:
   print("Null hyphothesis accepted , Alternative hyphothesis rejected")
 
 # perform power analysis
-power = analysis.solve_power(power=None, effect_size=1, alpha=alpha, nobs1=10, ratio=1.0)
-print('Power: %.3f' % power)
+pie = analysis.solve_power(power=None, effect_size=1, alpha=alpha, nobs1=10, ratio=1.0)
+print('Power: %.3f' % pie)
 sample_sizes = np.array(range(10, 50, 10))
 alphas = np.array([0.05, 0.10, 0.20])
 plt.style.use('seaborn')
@@ -316,3 +320,15 @@ fig = analysis.plot_power(
     dep_var='nobs', nobs=sample_sizes,  
     effect_size=effect_sizes, alpha=0.01, ax=ax, 
     title='Power of Independent Samples t-test\n$\\alpha = 0.01$')
+
+from matplotlib.backends.backend_pdf import PdfPages
+# Save all figures to PDF
+def save_figs_pdf(filename, figs=None, dpi=200):
+    pp = PdfPages(filename)
+    if figs is None:
+        figs = [plt.figure(n) for n in plt.get_fignums()]
+    for fig in figs:
+        fig.savefig(pp, format='pdf')
+    pp.close()
+
+save_figs_pdf('hw3_plt_figs.pdf')
