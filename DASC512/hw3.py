@@ -19,12 +19,12 @@ alpha = 0.05
 # usually dof = n - 1 for a single population sampling problem
 dof = len(placebo) - 1
 t_crit = stats.t.ppf(1 - alpha, dof)
-t_stat, p_val = stats.ttest_1samp(placebo, mu)
+tstat, pval = stats.ttest_1samp(placebo, mu)
 # Since alternative hypothesis is one tailed, We need to divide the p value by 2.
-p_val_upper_tail = float("{:.6f}".format(p_val/2)) 
+p_val_upper_tail = float("{:.6f}".format(pval/2)) 
 
 print('T-Crit for this right-tailed placebo test is %f'%float("{:.6f}".format(t_crit)))
-print('Test statistic is %f'%float("{:.6f}".format(t_stat)))
+print('Test statistic is %f'%float("{:.6f}".format(tstat)))
 print('p-value for right-tailed test is %f'%p_val_upper_tail)
 
 # Reject H0 only if the p_val < alpha (level of significance) or, 
@@ -45,13 +45,13 @@ mu = 92
 # usually dof = n - 1 for a single population sampling problem
 dof = len(caffeine) - 1
 t_crit = -stats.t.ppf(alpha, dof)
-t_stat, p_val = stats.ttest_1samp(caffeine, mu)
+tstat, pval = stats.ttest_1samp(caffeine, mu)
 # p_value is wrong, it's for 2-sided, which is equivalent to Upper tail/2.  
 # To convert subtract 1 and divide by 2
-p_val_lower_tail= float("{:.6f}".format((1 - p_val) / 2))
+p_val_lower_tail= float("{:.6f}".format((1 - pval) / 2))
 
 print('T-Crit for this left-tailed caffeine test is %f'%float("{:.6f}".format(t_crit)))
-print('T-stat statistic is %f'%float("{:.6f}".format(t_stat)))
+print('T-stat statistic is %f'%float("{:.6f}".format(tstat)))
 print('p-value for left-tailed test is %f'%p_val_lower_tail)
 
 if p_val_lower_tail <= alpha:
@@ -69,19 +69,19 @@ t_crit = stats.t.ppf((1-alpha)/2, dof)
 print(np.std(placebo, ddof=1), np.std(caffeine, ddof=1))
  # out => 7.699206308300732 5.6075346137535735
  # Different stdev so need to use equal_var = False testing for zero order doesn't matter
-t_stat, p_val = stats.ttest_ind(placebo, caffeine, equal_var = False)
+tstat, pval = stats.ttest_ind(placebo, caffeine, equal_var = False)
 
 print('T-Crit for this two-tailed test is %f'%float("{:.6f}".format(t_crit)))
-print('Test statistic is %f'%float("{:.6f}".format(abs(t_stat))))
-print('p-value for two-tailed test is %f'%p_val)
+print('Test statistic is %f'%float("{:.6f}".format(abs(tstat))))
+print('p-value for two-tailed test is %f'%pval)
 
-if p_val <= alpha:
-    print('Conclusion: Since p_val(=%f)'%p_val,'<=','alpha(=%.2f)'%alpha,'''We reject the null hypothesis H0. 
+if pval <= alpha:
+    print('Conclusion: Since p_val(=%f)'%pval,'<=','alpha(=%.2f)'%alpha,'''We reject the null hypothesis H0. 
             (i.e. accept H_a) and conclude that there is a significant difference in RER 
             between the mean value RER for the Placebo and Caffeine groups.
             i.e. μ > 0 at %.2f level of significance'''%alpha)
 else:
-    print('Conclusion: Since p_val(=%f)'%p_val,'>','alpha(=%.2f)'%alpha,'''We fail to reject the null hypothesis H0 
+    print('Conclusion: Since p_val(=%f)'%pval,'>','alpha(=%.2f)'%alpha,'''We fail to reject the null hypothesis H0 
             (i.e. accept H_0) and conclude these means are statistically equal 
             at %.2f level of significance'''%alpha) 
 
@@ -100,14 +100,14 @@ mean_diff = mu - x1
 alpha = 0.05
 # usually dof = n - 1 for a single population sampling problem
 dof = n - 1
-t_stat = (mean_diff / std_error_x1)
+tstat = (mean_diff / std_error_x1)
 # p_val = stats.t.cdf(t_stat, dof)
 t_crit = stats.t.ppf(1 - alpha, dof)
-p_val = 1 - stats.norm.cdf(t_crit)
+pval = 1 - stats.norm.cdf(t_crit)
 
 print('T-Crit for this right-tailed plasma test is %f'%float("{:.6f}".format(t_crit)))
-print('Test statistic is %f'%float("{:.6f}".format((t_stat))))
-print('p-value for right-tailed plasma test is %f'%p_val)
+print('Test statistic is %f'%float("{:.6f}".format((tstat))))
+print('p-value for right-tailed plasma test is %f'%pval)
 
 '''Problem 3'''
 co_1 = (103, 94, 110, 87, 98)
@@ -119,11 +119,11 @@ t_crit = stats.t.ppf(alpha/2, dof)
 print(np.std(co_1, ddof=1), np.std(co_2, ddof=1))
  # out => 8.734987120768983 32.185474393035776
  # Different stdev so need to use equal_var = False testing for zero order doesn't matter
-t_stat, p_val = stats.ttest_ind(co_1, co_2, equal_var = False)
+tstat, pval = stats.ttest_ind(co_1, co_2, equal_var = False)
 
 print('T-Crit for this two-tailed run-time test is %f'%float("{:.6f}".format(t_crit)))
-print('Test statistic is %f'%float("{:.6f}".format(abs(t_stat))))
-print('p-value for two-tailed run-time test is %f'%p_val)
+print('Test statistic is %f'%float("{:.6f}".format(abs(tstat))))
+print('p-value for two-tailed run-time test is %f'%pval)
 
 '''Problem 5'''
 # mean breaking strength of 15 kilograms with a standard deviation of 0.5 kilograms. 
@@ -150,11 +150,11 @@ df_bavg = pd.read_csv("BattingAverages.csv", sep = ',')
 # Clean-up
 df_bavg.drop('Unnamed: 6', axis=1, inplace=True)
 # print(df_bavg.head())
-size = len(df_bavg.index)
+sample_size = len(df_bavg.index)
 # print('bavg length: ' + str(size))
 mu, sigma = np.mean(df_bavg['BattingAvg']), np.std(df_bavg['BattingAvg'])
 # print('mu bat avg = ', mu)
-means = np.random.normal(mu, sigma, size)
+means = np.random.normal(mu, sigma, sample_size)
 
 # Histplot
 fig, ax = plt.subplots(figsize=(6,4))
@@ -165,7 +165,7 @@ sns.histplot(means, kde=True)
 # sns.histplot(data=means, bins=bins, ax=ax_hist, color='green', kde=True, stat="count", linewidth=0)
 # Use scipy.stats implementation of the normal pdf
 # Plot the distribution curve
-x = np.linspace(0, 0.5, num=size)
+x = np.linspace(0, 0.5, num=sample_size)
 plt.plot(x, stats.norm.pdf(x, mu, sigma), color='green')
 
 # Boxplot
@@ -182,8 +182,8 @@ pp = sm.ProbPlot(np.array(means), stats.norm, fit=True)
 qq = pp.qqplot(marker='.', ax=ax, markerfacecolor='darkorange', markeredgecolor='darkorange', alpha=0.8)
 sm.qqline(qq.axes[0], line='45', fmt='k--')
 # plt.show()
-stat, pval = stats.normaltest(means)
-print('Statistics=%.3f, p=%.3f' % (stat, pval))
+tstat, pval = stats.normaltest(means)
+print('tstat=%.3f, p=%.3f' % (tstat, pval))
 # interpret
 alpha = 0.05
 if pval > alpha:
@@ -192,15 +192,15 @@ else:
 	print('Sample does not look Normal (reject H0)')
 
 df_bavg['BattingAvg'].describe()
-zstat, pval = stests.ztest(df_bavg['BattingAvg'], x2=None, value=0.265)
-print('zstat=%.3f, p=%.3f' % (zstat, pval))
+tstat, pval = stests.ztest(df_bavg['BattingAvg'], x2=None, value=0.265)
+print('zstat=%.3f, pval=%.3f' % (tstat, pval))
 if pval < alpha:
   print("Null hyphothesis rejected , Alternative hyphothesis accepted conclude mean batting avg < 0.265")
 else:
   print("Null hyphothesis accepted , Alternative hyphothesis rejected")
 
 # perform power analysis
-pie = analysis.solve_power(power=None, effect_size=1, alpha=0.05, nobs1=10, ratio=1.0)
+pie = analysis.solve_power(power=None, effect_size=1, alpha=0.05, nobs1=sample_size, ratio=1.0)
 print('Power: %.3f' % pie)
 
 df_ba_nl = df_bavg.loc[df_bavg['League'] == 'National League']['BattingAvg']
@@ -208,11 +208,11 @@ df_ba_al = df_bavg.loc[df_bavg['League'] == 'American League']['BattingAvg']
 print(np.std(df_ba_nl, ddof=1), np.std(df_ba_al, ddof=1))
 # out => 0.033159408525780996 0.03484792169158821
 # = stdev equal, checking for mean diff
-v_stat, p_val = stests.ztest(df_ba_nl, df_ba_al, value = 0)
-print('v_stat=%.3f, p=%.3f' % (stat, p_val))
+tstat, pval = stests.ztest(df_ba_nl, df_ba_al, value = 0)
+print('tstat=%.3f, pval=%.3f' % (tstat, pval))
 # interpret
 alpha = 0.05
-if p_val > alpha:
+if pval > alpha:
 	print('Same distributions (fail to reject H0) conclude similar avgs among leagues')
 else:
 	print('Different distributions (reject H0) conclude different avgs b/t leagues.')
@@ -222,11 +222,11 @@ df_bt = pd.read_csv("BodyTemp.csv", sep = ',')
 # Clean-up
 df_bt.drop('Unnamed: 2', axis=1, inplace=True)
 # print(df_bt.head())
-size = len(df_bt.index)
+sample_size = len(df_bt.index)
 # print('bavg length: ' + str(size))
 mu, sigma = np.mean(df_bt['BodyTemp']), np.std(df_bt['BodyTemp'])
 # print('mu body temp = ', mu)
-means = np.random.normal(mu, sigma, size)
+means = np.random.normal(mu, sigma, sample_size)
 
 # Histplot
 fig, ax = plt.subplots(figsize=(6,4))
@@ -237,7 +237,7 @@ sns.histplot(means, kde=True)
 # sns.histplot(data=means, bins=bins, ax=ax_hist, color='green', kde=True, stat="count", linewidth=0)
 # Use scipy.stats implementation of the normal pdf
 # Plot the distribution curve
-x = np.linspace(96, 102, num=size)
+x = np.linspace(96, 102, num=sample_size)
 plt.plot(x, stats.norm.pdf(x, mu, sigma), color='green')
 
 # Boxplot
@@ -255,8 +255,8 @@ qq = pp.qqplot(marker='.', ax=ax, markerfacecolor='darkorange', markeredgecolor=
 sm.qqline(qq.axes[0], line='45', fmt='k--')
 # plt.show()
 
-stat, pval = stats.normaltest(means)
-print('Statistics=%.3f, p=%.3f' % (stat, pval))
+tstat, pval = stats.normaltest(means)
+print('tstat=%.3f, pval=%.3f' % (tstat, pval))
 # interpret
 alpha = 0.05
 if pval > alpha:
@@ -266,8 +266,8 @@ else:
 
 df_bt['BodyTemp'].describe()
 alpha = 0.20
-zstat, pval = stests.ztest(df_bt['BodyTemp'], value=98.6)
-print('zstat=%.3f, p=%.3f' % (zstat, pval))
+tstat, pval = stests.ztest(df_bt['BodyTemp'], value=98.6)
+print('tstat=%.3f, pval=%.3f' % (tstat, pval))
 if pval < alpha:
   print("Null hyphothesis rejected , Alternative hyphothesis accepted")
 else:
@@ -291,11 +291,11 @@ df_bt_female = df_bt.loc[df_bt['Gender'] == 'Female']['BodyTemp']
 print(np.std(df_bt_male, ddof=1), np.std(df_bt_female, ddof=1))
 # out => 0.7008272469467351 0.7414338650419362
 # = stdev equal, checking for mean diff
-t_stat, p_val = stests.ztest(df_bt_male, df_bt_female, value = 0)
-print('t_stat=%.3f, p=%.3f' % (stat, p_val))
+tstat, pval = stests.ztest(df_bt_male, df_bt_female, value = 0)
+print('tstat=%.3f, pval=%.3f' % (tstat, pval))
 # interpret
 alpha = 0.05
-if p_val > alpha:
+if pval > alpha:
 	print('Same distributions (fail to reject H0)')
 else:
 	print('Different distributions (reject H0), conclude the mean Body Temps are  significantly different between males & females')
