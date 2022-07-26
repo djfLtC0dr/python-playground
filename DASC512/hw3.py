@@ -150,7 +150,7 @@ df_bavg = pd.read_csv("BattingAverages.csv", sep = ',')
 # Clean-up
 df_bavg.drop('Unnamed: 6', axis=1, inplace=True)
 # print(df_bavg.head())
-sample_size = len(df_bavg.index)
+sample_size = df_bavg['BattingAvg'].count()
 # print('bavg length: ' + str(size))
 mu, sigma = np.mean(df_bavg['BattingAvg']), np.std(df_bavg['BattingAvg'])
 # print('mu bat avg = ', mu)
@@ -195,9 +195,9 @@ df_bavg['BattingAvg'].describe()
 tstat, pval = stests.ztest(df_bavg['BattingAvg'], x2=None, value=0.265)
 print('zstat=%.3f, pval=%.3f' % (tstat, pval))
 if pval < alpha:
-  print("Null hyphothesis rejected , Alternative hyphothesis accepted conclude mean batting avg < 0.265")
+  print("Null hyphothesis rejected , Alternative hypothesis accepted conclude mean batting avg < 0.265")
 else:
-  print("Null hyphothesis accepted , Alternative hyphothesis rejected")
+  print("Null hyphothesis accepted , Alternative hypothesis rejected")
 
 # perform power analysis
 pie = analysis.solve_power(power=None, effect_size=1, alpha=0.05, nobs1=sample_size, ratio=1.0)
@@ -274,7 +274,7 @@ else:
   print("Null hyphothesis accepted , Alternative hyphothesis rejected")
 
 # perform power analysis
-pie = analysis.solve_power(power=None, effect_size=1, alpha=alpha, nobs1=10, ratio=1.0)
+pie = analysis.solve_power(power=None, effect_size=1, alpha=alpha, nobs1=sample_size, ratio=1.0)
 print('Power: %.3f' % pie)
 sample_sizes = np.array(range(10, 50, 10))
 alphas = np.array([0.05, 0.10, 0.20])
