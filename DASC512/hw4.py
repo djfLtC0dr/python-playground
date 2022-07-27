@@ -10,6 +10,8 @@ import statsmodels.api as sm
 from statsmodels.formula.api import ols
 from statsmodels.stats.anova import anova_lm
 from statsmodels.graphics.factorplots import interaction_plot
+from statsmodels.stats.multicomp import(pairwise_tukeyhsd, MultiComparison)
+
 
 '''Problem 1'''
 # A study was designed to determine if a persons essay quality or attractiveness 
@@ -24,18 +26,19 @@ txt_file = "halo1.dat"
 # essay quality = eq, student attractiveness = sa, essay score = score
 COLUMN_NAMES=['eq','sa','score']
 
-data = pd.DataFrame()
-with open(txt_file) as f:
-    data = pd.read_table(f, delim_whitespace=True, header=None, names=COLUMN_NAMES,
+data = pd.read_table(txt_file, delim_whitespace=True, header=None, names=COLUMN_NAMES,
                           lineterminator='\n')
-# print(data)
+# print(data.head())
+
 #Create Interaction Plot
-fig, ax = plt.subplots(figsize=(12,6))
+fig, ax = plt.subplots(figsize=(6,4))
+fig.tight_layout(pad = 3)
+fig.suptitle('HW4P1 Interaction Plot') 
 fig = interaction_plot(data['eq'], data['sa'], data['score'],
                        colors=['green', 'red', 'blue'], markers=['1', '2', '3'], ms=10, ax=ax)
 
 #Calculate Degrees of Freedom
-n=len(data.score)
+n=len(data['score'])
 df_a = len(data['eq'].unique())-1
 df_b = len(data['sa'].unique())-1
 df_ab = df_a*df_b
@@ -55,7 +58,7 @@ eq1 = data[data['eq'] == 1]
 eq2 = data[data['eq'] == 2]
 eq1_sa_means = [eq1[eq1['sa'] == a]['score'].mean() for a in eq1['sa']]
 eq2_sa_means = [eq2[eq2['sa'] == a]['score'].mean() for a in eq2['sa']]
-sse = sum((eq1['score'] - eq1_sa_means)**2) +sum((eq2['score'] - eq2_sa_means)**2)
+sse = sum((eq1['score'] - eq1_sa_means)**2) + sum((eq2['score'] - eq2_sa_means)**2)
 
 ssab = sstotal-ssa-ssb-sse                                         
 
@@ -84,18 +87,18 @@ results = {'sum_sq':[ssa, ssb, ssab, sse],
            'F':[f_a, f_b, f_ab, 'NaN'],
             'PR(>F)':[p_a, p_b, p_ab, 'NaN']}
 columns=['sum_sq', 'df', 'MS', 'F', 'PR(>F)']
-aov_table1 = pd.DataFrame(results, columns=columns,
+anova_table1 = pd.DataFrame(results, columns=columns,
                           index=['eq', 'sa', 
                           'eq:sa', 'Residual'])
 
-print(aov_table1)
+print(anova_table1)
 
 
 formula = 'score ~ C(eq) + C(sa) + C(eq):C(sa)'
 model = ols(formula, data).fit()
-aov_table = anova_lm(model, typ=2)
+anova_table = anova_lm(model, typ=2)
 
-print(aov_table)
+# print(anova_table)
 
 '''Problem 2'''
 # The data ‘virtual training.csv’ examines the effects of different trainig methods a procedure to launch
@@ -107,4 +110,33 @@ print(aov_table)
 # shared α) and Tukey.
 df_vt = pd.read_csv("virtual_training.csv", sep = ',')
 df_vt.columns = ['effect', 'result']
-print(df_vt.head())
+# print(df_vt)
+
+# generate a boxplot to see the data distribution by effect. 
+fig, ax = plt.subplots(figsize=(6,4))
+fig.tight_layout(pad = 3)
+fig.suptitle('HW4P2 Effects vs. Results Box+Swarm Plot') 
+ax = sns.boxplot(x='effect', y='result', data=df_vt, color='#99c2a2')
+ax = sns.swarmplot(x='effect', y='result', data=df_vt, color='#7d0013')
+
+# Ordinary Least Squares (OLS) model
+formula = 'result ~ C(effect)'
+model = ols(formula, data=df_vt).fit()
+anova_table = anova_lm(model, typ=2)
+print(anova_table)
+
+# Multicomp Tukey
+multi_comp = MultiComparison(df_vt['result'], df_vt['effect'])
+print(multi_comp.tukeyhsd().summary())
+
+from matplotlib.backends.backend_pdf import PdfPages
+# Save all figures to PDF
+def save_figs_pdf(filename, figs=None, dpi=200):
+    pp = PdfPages(filename)
+    if figs is None:
+        figs = [plt.figure(n) for n in plt.get_fignums()]
+    for fig in figs:
+        fig.savefig(pp, format='pdf')
+    pp.close()
+
+save_figs_pdf('hw4_plt_figs.pdf')
