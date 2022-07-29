@@ -8,6 +8,7 @@ from pathlib import Path
 from statsmodels.stats import power
 import statsmodels.api as sm
 from statsmodels.stats import weightstats as stests
+from math import isqrt
 
 '''Problem 1'''
 # Suppose that the four inspectors @film factory are supposed 
@@ -139,12 +140,18 @@ print('Power: %.3f' % pwr)
 print(confidence_interval(df_of_gte3['waiting']))
 
 '''Problem 3h 2x boxplots same axis for means <3 & >=3 '''
-fig, axes = plt.subplots(1, 2)
-sns.boxplot(x='eruptions', y='waiting', data=df_of_lt3, palette="Set3", ax=axes[0])
-sns.boxplot(x='eruptions',y='waiting', data=df_of_gte3, palette="Set3", ax=axes[0])
-fig.tight_layout(pad = 3)
+mu_lt3, sigma_lt3 = np.mean(df_of_lt3['waiting']), np.std(df_of_lt3['waiting'])
+sample_size_lt3 = len(df_of_lt3['waiting'])
+means_lt3 = np.random.normal(mu_lt3, sigma_lt3, sample_size_lt3)
+mu_gte3, sigma_gte3 = np.mean(df_of_gte3['waiting']), np.std(df_of_gte3['waiting'])
+sample_size_gte3 = len(df_of_gte3['waiting'])
+means_gte3 = np.random.normal(mu_gte3, sigma_gte3, sample_size_gte3)
+fig, axs = plt.subplots(1, 2, figsize=(12,8), tight_layout = True)
+sns.boxplot(data=means_lt3, color = 'darkgreen', ax=axs[0])
+sns.boxplot(data=means_gte3, color = 'lightgreen', ax=axs[1])
+# sns.boxplot(x='eruptions', y='waiting', data=df_of_lt3, )
+# sns.boxplot(x='eruptions',y='waiting', data=df_of_gte3, ax=axs[1])
 fig.suptitle('Boxplots Eruptions < 3-mins & >= 3-mins')
-# plt.show()
 
 '''Problem 3i ztest b/t means 20 mins'''
 # checking for mean diff = 20
@@ -169,7 +176,36 @@ pwr = analysis.solve_power(effect_size=0.5, alpha=0.05, nobs1=sample_size)
 print('Power: %.3f' % pwr)  
 
 '''Problem 3k Confidence Interval for 2x df mean wait times'''
-# TODO concat dataframes
-# Stack the DataFrames on top of each other
+# concat the two DataFrames on top of each other
 df_stacked_waits = pd.concat([df_of_lt3['waiting'], df_of_gte3['waiting']], axis=0)
+print(confidence_interval(df_stacked_waits))
 
+'''Problem 3l histogram for the wait times'''
+# Creating histogram
+fig, ax = plt.subplots(1, 1, figsize =(12, 8), tight_layout = True)
+plt.xlabel("Wait Times")
+plt.ylabel("Count")    
+plt.title("Histogram Eruptions < 3-mins & >= 3-mins'")
+hist_wt_bins = isqrt(len(df_stacked_waits))             
+hist_wait_times = ax.hist(df_stacked_waits, bins = hist_wt_bins)
+
+'''Problem 3m QQ-Plot to for wait times to assess normality.'''
+mu_combo_wt, sigma_combo_wt = np.mean(df_stacked_waits), np.std(df_stacked_waits)
+sample_size_combo_wt = len(df_stacked_waits)
+means_combo_wt = np.random.normal(mu_combo_wt, sigma_combo_wt, sample_size_combo_wt)
+fig, ax = plt.subplots(figsize=(6,4))
+fig.suptitle('Wait Times QQ-Plot')
+fig.tight_layout(pad=3)
+pp = sm.ProbPlot(np.array(means_combo_wt), stats.norm, fit=True)
+qq = pp.qqplot(marker='.', ax=ax, markerfacecolor='darkorange', markeredgecolor='darkorange', alpha=0.8)
+sm.qqline(qq.axes[0], line='45', fmt='k--')
+
+'''Problem 3n Perform a test for normality on the wait times.'''
+tstat, pval = stats.normaltest(means_combo_wt)
+print('tstat=%.4f, p=%.4f' % (tstat, pval))
+# interpret
+alpha = 0.05
+if pval < alpha:
+    print('Since pval(=%.4f)'%pval,'<','alpha(=%.2f)'%alpha,'''We reject the null hypothesis H0 and conclude the Sample does not look Normal''')
+else:
+	print('Since pval(=%.4f)'%pval,'>','alpha(=%.2f)'%alpha,'''We fail to reject the null hypothesis H0 and conclude the Sample looks Normal''')
