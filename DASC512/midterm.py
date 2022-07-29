@@ -209,3 +209,44 @@ if pval < alpha:
     print('Since pval(=%.4f)'%pval,'<','alpha(=%.2f)'%alpha,'''We reject the null hypothesis H0 and conclude the Sample does not look Normal''')
 else:
 	print('Since pval(=%.4f)'%pval,'>','alpha(=%.2f)'%alpha,'''We fail to reject the null hypothesis H0 and conclude the Sample looks Normal''')
+
+'''Problem 5 IQ Power @AFIT'''
+# IQ of incoming students at AFIT. We desire to run a test that will detect a 5 IQ point difference 
+# between the true mean and our new class. From previous research, we assume a standard deviation of 15 (sd is known) 
+# and leadership wants to have options for α = 0.05 and α = 0.1. Create a plot for a power analysis 
+# where the y axis is the power of our test and the x axis is the sample size. 
+# It should have a line for α = 0.05 and a line for α = 0.1
+x1 = 108
+x2 = 112
+sigma = 15
+mu = 100
+effect_size1 = (x1 - mu)/sigma
+effect_size2 = (x2 - mu)/sigma
+sample_sizes = np.array([25, 50])
+alphas = np.array([0.05, 0.10])
+effect_sizes = np.array([effect_size1, effect_size2])
+plt.style.use('seaborn')
+fig = plt.figure()
+ax = fig.add_subplot(1, 1, 1)
+fig = analysis.plot_power(
+    dep_var='nobs', nobs=sample_sizes,  
+    effect_size=effect_sizes, alpha=alphas, ax=ax, 
+    title='Power Analysis\n$\\alpha$ = [0.05, 0.10]')
+fig.tight_layout(pad=3)
+plt.xlabel("Number of Observations")
+plt.ylabel("Power")
+ax.grid(True)
+
+'''Problem 6 Precision Air Drop Probability'''
+# The accuracy of a new precision air drop system being tested by the US Air Force 
+# follows a normal distribution with a mean of 50 ft and a standard deviation of 10 feet. 
+# A particular resupply mission is considered successful if at least 6 of the 9 payloads are 
+# delivered with an accuracy of between 40 and 55 feet. 
+# What is the probability that the resupply mission will be successful?
+mu_pads, sigma_pads = 50, 10
+upper_prob = stats.norm(mu_pads, sigma_pads).cdf(55)
+lower_prob = stats.norm(mu_pads, sigma_pads).cdf(40)
+prob_success = upper_prob + lower_prob
+successful_drops = 6/9
+msn_success = successful_drops * prob_success
+# print(msn_success) => 0.5667451434703135
