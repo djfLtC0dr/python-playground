@@ -9,6 +9,9 @@ from statsmodels.stats import power
 import statsmodels.api as sm
 from statsmodels.stats import weightstats as stests
 from math import isqrt
+from statsmodels.formula.api import ols
+from statsmodels.stats.anova import anova_lm
+from statsmodels.stats.multicomp import(pairwise_tukeyhsd, MultiComparison)
 
 '''Problem 1'''
 # Suppose that the four inspectors @film factory are supposed 
@@ -246,7 +249,98 @@ ax.grid(True)
 mu_pads, sigma_pads = 50, 10
 upper_prob = stats.norm(mu_pads, sigma_pads).cdf(55)
 lower_prob = stats.norm(mu_pads, sigma_pads).cdf(40)
-prob_success = upper_prob + lower_prob
-successful_drops = 6/9
-msn_success = successful_drops * prob_success
-# print(msn_success) => 0.5667451434703135
+# SUBTRACT the probabilities (upper - lower) we're looking for the probability (area under the curve) 
+prob_success = upper_prob - lower_prob
+# now we need to get the set of probabilities of discrete outcomes
+x, n = 6, 9
+msn_success_prob = stats.binom.pmf(x, n, prob_success)
+print(msn_success_prob) #=> 0.19596938728722993
+
+'''Problem 7 Does sigma of rods exceeds 3.3'''
+# Import data file into a dataframe
+txt_file = "steel.txt"
+COLUMN_NAMES=['steel']
+
+steel_data = pd.read_table(txt_file, delim_whitespace=True, header=None, names=COLUMN_NAMES,
+                          lineterminator='\n')
+# print(steel_data.head())
+steel_std = np.std(steel_data['steel'])
+print('Steel stdev: %.4f'%steel_std)
+
+'''Problem 8 Left Tail T-Test the mean chlorine content is =71ppm vs <71ppm '''
+# Import data file into a dataframe
+txt_file = "chlorine.txt"
+COLUMN_NAMES=['cl_sample']
+
+cl_data = pd.read_table(txt_file, delim_whitespace=True, header=None, names=COLUMN_NAMES,
+                          lineterminator='\n')
+# print(cl_data.head())
+mu = 71
+alpha = 0.05
+# usually dof = n - 1 for a single population sampling problem
+dof = len(cl_data) - 1
+t_crit = -stats.t.ppf(alpha, dof)
+res = stats.ttest_1samp(cl_data, mu)
+tstat, pval = res.statistic, res.pvalue
+# p_value is wrong, it's for 2-sided, which is equivalent to Upper tail/2.  
+# To convert subtract 1 and divide by 2
+p_val_lower_tail= float("{:.6f}".format((1 - pval[0]) / 2))
+
+print('T-Crit for this left-tailed caffeine test is %f'%float("{:.4f}".format(t_crit)))
+print('T-stat statistic is %f'%float("{:.4f}".format(tstat[0])))
+print('p-value for left-tailed test is %f'%p_val_lower_tail)
+
+if p_val_lower_tail <= alpha:
+    print('Conclusion: Since p_val(=%f)'%p_val_lower_tail,'<=','alpha(=%.2f)'%alpha,'''We reject the null hypothesis H0. 
+            (i.e. accept H_a) and conclude that mean chlorine content is less than 71 ppm 
+            i.e., μ < 71ppm at %.2f level of significance'''%alpha)
+else:
+    print('Conclusion: Since p_val(=%f)'%p_val_lower_tail,'>','alpha(=%.2f)'%alpha,'''We fail to reject the null hypothesis H0 
+            (i.e. accept H_0) and conclude mean chlorine content is equal to 71 ppm
+            i.e., μ = 71ppm at %.2f level of significance'''%alpha)    
+
+'''Problem 9 ANOVA + Hyp Test dental_crown.txt for significance'''
+# Column 1 is the dentist who applied the crown, 
+# column 2 is the method used, 
+# column 3 is the alloy used, 
+# column 4 is the temperature of the application instrument and 
+# column 5 is the response (diamond pyramid hardness). 
+# Construct an ANOVA table and perform hypothesis tests to determine which (if any) factors 
+# and interactions are significant.
+# Import data file into a dataframe
+txt_file = "dental_crown.txt"
+COLUMN_NAMES=['dentist','method','alloy','temp','hardness']
+
+dc_data = pd.read_table(txt_file, delim_whitespace=True, header=None, names=COLUMN_NAMES,
+                          lineterminator='\n')
+# print(dc_data.head())
+# # generate a boxplot to see the data distribution by effect. 
+fig, ax = plt.subplots(figsize=(6,4))
+fig.tight_layout(pad = 3)
+fig.suptitle('Factors vs. Hardness Box Plot') 
+ax = sns.boxplot(x='method', y='hardness', data=dc_data, color='#99c2a2')
+ax = sns.boxplot(x='alloy', y='hardness', data=dc_data, color='#99c2a2')
+ax = sns.boxplot(x='temp', y='hardness', data=dc_data, color='#99c2a2')
+
+# Ordinary Least Squares (OLS) model
+formula = 'hardness ~ method + alloy + temp + method:alloy:temp'
+model = ols(formula, data=dc_data).fit()
+anova_table = anova_lm(model, typ=2)
+print(anova_table)
+
+# Multicomp Tukey
+interaction_groups = "Method_" + dc_data['method'].astype(str) + " & " + "Alloy_" + dc_data['alloy'].astype(str) + " & " + "Temp_" + dc_data['temp'].astype(str)
+multi_comp = MultiComparison(dc_data['hardness'], interaction_groups)
+print(multi_comp.tukeyhsd().summary())
+
+from matplotlib.backends.backend_pdf import PdfPages
+# Save all figures to PDF
+def save_figs_pdf(filename, figs=None, dpi=200):
+    pp = PdfPages(filename)
+    if figs is None:
+        figs = [plt.figure(n) for n in plt.get_fignums()]
+    for fig in figs:
+        fig.savefig(pp, format='pdf')
+    pp.close()
+
+save_figs_pdf('midterm_plt_figs.pdf')
