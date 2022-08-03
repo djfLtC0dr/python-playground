@@ -604,3 +604,15 @@ win_loss_sea = 116 / (116 + 46)
 
 print('Difference in prediction for baseball model 2 to actual W/L is  ' + str(1 - (win_loss_sea/baseball_model_2_predict)))
 print('Difference in prediction for baseball model 3 to actual W/L is  ' + str(1 - (win_loss_sea/baseball_model_3_predict)))
+
+from matplotlib.backends.backend_pdf import PdfPages
+# Save all figures to PDF
+def save_figs_pdf(filename, figs=None, dpi=200):
+    pp = PdfPages(filename)
+    if figs is None:
+        figs = [plt.figure(n) for n in plt.get_fignums()]
+    for fig in figs:
+        fig.savefig(pp, format='pdf')
+    pp.close()
+
+save_figs_pdf('hw5plt_figs.pdf')
