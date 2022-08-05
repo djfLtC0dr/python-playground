@@ -1,4 +1,3 @@
-from statistics import mode
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -468,7 +467,7 @@ UL=beta_1+tcrit*s/(SSxx**(1/2))
 LL=beta_1-tcrit*s/(SSxx**(1/2))
 
 print('We are', 100*(1-alpha), 
-'%confident that the true value of the slope is in the interval(', round(LL,2),',',round(UL,2),')')
+'%confident that the true value of the slope is in the interval(', round(LL,4),',',round(UL,4),')')
 
 # Prediction based on regression analysis
 x_run_diff = 300
@@ -568,7 +567,7 @@ UL=beta_1+tcrit*s/(SSxx**(1/2))
 LL=beta_1-tcrit*s/(SSxx**(1/2))
 
 print('We are', 100*(1-alpha), 
-'%confident that the true value of the slope is in the interval(', round(LL,2),',',round(UL,2),')')
+'%confident that the true value of the slope is in the interval(', round(LL,4),',',round(UL,4),')')
 
 # Prediction based on regression analysis
 R = 927
