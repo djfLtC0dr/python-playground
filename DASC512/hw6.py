@@ -33,7 +33,7 @@ fitted_values = model_baseball_run_diff.fittedvalues
 
 fig, ax = plt.subplots(figsize=(12,8))
 ax.scatter(fitted_values, residuals, alpha=1.0, color='dodgerblue')
-fig.suptitle('Residuals versus Fitted Values')
+fig.suptitle('Residuals versus Fitted Values - Run Diff')
 plt.ylabel("Residual")
 plt.xlabel("Fitted Values")
 fig.tight_layout(pad=3)
@@ -66,7 +66,7 @@ fitted_values = model_baseball_py_exp.fittedvalues
 
 fig, ax = plt.subplots(figsize=(12,8))
 ax.scatter(fitted_values, residuals, alpha=1.0, color='dodgerblue')
-fig.suptitle('Residuals versus Fitted Values')
+fig.suptitle('Residuals versus Fitted Values - Pythagorean Exp')
 plt.ylabel("Residual")
 plt.xlabel("Fitted Values")
 fig.tight_layout(pad=3)
