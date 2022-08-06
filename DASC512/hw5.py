@@ -285,6 +285,7 @@ ax.plot(x_pred, y_pred, '-', color='blue', linewidth=2)
 df_pred = pd.DataFrame({'obp': x_pred,'slg': y_pred})
 prediction=model_baseball.get_prediction(df_pred)
 predints=prediction.summary_frame(alpha=0.1)
+print(predints)
 
 ax.fill_between(x_pred, predints['mean_ci_lower'], predints['mean_ci_upper'], color='#888888', alpha=0.6)
 ax.fill_between(x_pred, predints['obs_ci_lower'], predints['obs_ci_upper'], color='#888888', alpha=0.2)
