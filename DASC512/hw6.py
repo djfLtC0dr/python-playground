@@ -5,6 +5,8 @@ import scipy.stats as stats
 import seaborn as sns
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
+from mlxtend.feature_selection import SequentialFeatureSelector as sfs
+from sklearn.linear_model import LinearRegression
 
 '''Problem 1'''
 #Read the data 
@@ -84,11 +86,12 @@ plt.axhline(y=0,color='black')
 #Read the data 
 df_crime = pd.read_csv("UScrime.csv", sep = ',')
 # print(df_crime.head())
-# clean-up unnecessary data
-df_crime.drop(df_crime.columns[df_crime.columns.str.contains('unnamed',case = False)],axis = 1, inplace = True)
-print(df_crime.head())
-
-
+# checking missing values in the data
+df_crime.isnull().sum()
+# creating the training data
+y = df_crime['Crime']
+x = df_crime.drop(['Unnamed: 0', 'Crime'],axis = 1)
+x.shape, y.shape
 #*********************************************************
 from matplotlib.backends.backend_pdf import PdfPages
 # Save all figures to PDF
