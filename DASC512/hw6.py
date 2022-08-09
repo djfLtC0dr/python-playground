@@ -7,6 +7,8 @@ import statsmodels.api as sm
 import statsmodels.formula.api as smf
 from mlxtend.feature_selection import SequentialFeatureSelector as sfs
 from sklearn.linear_model import LinearRegression
+from sklearn.feature_selection import VarianceThreshold
+from statsmodels.stats.outliers_influence import variance_inflation_factor
 
 '''Problem 1'''
 #Read the data 
@@ -89,9 +91,81 @@ df_crime = pd.read_csv("UScrime.csv", sep = ',')
 # checking missing values in the data
 df_crime.isnull().sum()
 # creating the training data
-y = df_crime['Crime']
-x = df_crime.drop(['Unnamed: 0', 'Crime'],axis = 1)
-x.shape, y.shape
+y_column = ['Crime']
+y = df_crime[y_column]
+x_columns = ['M', 'So', 'Ed', 'Po1', 'Po2', 'LF', 'M.F', 'Pop', 'NW', 'U1', 'U2', 'Wealth', 'Ineq', 'Prob', 'Time']
+x = df_crime[x_columns]
+
+# remove features w/ variance < 30% => features which mostly remain at the same level 
+# across different observations, should not ideally be responsible for differing responses in the observations.   
+var = VarianceThreshold(threshold=0.3)
+var = var.fit(x,y)
+cols = var.get_support(indices=True)
+features = x.columns[cols]
+# print(features)
+x = df_crime[features]
+# print(x)
+
+# re-assign our df w/ only the features w/ variance > 30% + our target variable
+df_crime = x.assign(crime=y['Crime']) 
+# print(df_crime)
+
+# Remove features which are not correlated with the response variable 
+plt.figure(figsize=(12,12))
+cor = df_crime.corr()
+sns.heatmap(cor, annot=True, cmap=plt.cm.Reds)
+plt.show()
+
+# Consider correlations only with the target variable
+cor_target = abs(cor['crime'])
+
+#Select correlations with a correlation above a threshold 10%.
+features = cor_target[cor_target>0.1]
+print(features.index)
+x_columns = ['Ed', 'Po1', 'Po2', 'M.F', 'Pop', 'U2', 'Wealth', 'Ineq', 'Time']
+
+# Figure out the multicollinearity features to remove via VIF
+def compute_vif(considered_features):
+    
+    X = df_crime[considered_features]
+    # the calculation of variance inflation requires a constant
+    X = X.assign(intercept=1)
+    
+    # create dataframe to store vif values
+    vif = pd.DataFrame()
+    vif['feature'] = X.columns
+    vif['VIF'] = [variance_inflation_factor(X.values, i) for i in range(X.shape[1])]
+    vif = vif[vif['feature']!='intercept']
+    return vif
+
+# VIF dataframe
+vif_data = compute_vif(x_columns)
+# print(vif_data)
+# compute vif values after removing a feature(s) w/ VIF > 5
+x_columns.remove('Po2') # VIF 94.093117
+vif_data = compute_vif(x_columns)
+# print(vif_data)
+x_columns.remove('Wealth') # VIF 8.841141
+vif_data = compute_vif(x_columns)
+print(vif_data)
+
+## creating function to get model statistics
+def get_stats():
+    x = df_crime[x_columns]
+    results = sm.OLS(y, x).fit()
+    print(results.summary2())
+get_stats()
+
+# remove the least statistically significant variable(s)
+x_columns.remove('Time') # pval 0.5860
+get_stats()
+x_columns.remove('Pop') # pval 0.1135
+get_stats()
+x_columns.remove('Ed') # pval 0.1178 
+get_stats()
+
+# TODO Run residual analysis (graphically) to determine if model is accurate.
+
 #*********************************************************
 from matplotlib.backends.backend_pdf import PdfPages
 # Save all figures to PDF
