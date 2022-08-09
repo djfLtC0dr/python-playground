@@ -190,10 +190,11 @@ plt.axhline(y=0,color='black')
 
 #Normality Plots
 fig, (ax_box, ax_hist) = plt.subplots(2, sharex=True, gridspec_kw={"height_ratios": (.15, .85)},figsize=(12,8))
-sns.boxplot(residuals, ax=ax_box, color='darkorchid')
-sns.distplot(residuals, ax=ax_hist, color='orchid')
+fig.suptitle('Normality Plots')
+sns.boxplot(data=residuals, ax=ax_box, color='darkorchid')
+sns.histplot(data=residuals, ax=ax_hist, color='orchid')
 ax_box.set(xlabel='')
-# fig.savefig('crime_normality_plot.png', dpi=300)
+fig.savefig('crime_normality_plot.png', dpi=300)
 
 # QQ Plot
 fig, ax = plt.subplots(figsize=(6,4))
