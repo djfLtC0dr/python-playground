@@ -193,16 +193,16 @@ fig, (ax_box, ax_hist) = plt.subplots(2, sharex=True, gridspec_kw={"height_ratio
 sns.boxplot(residuals, ax=ax_box, color='darkorchid')
 sns.distplot(residuals, ax=ax_hist, color='orchid')
 ax_box.set(xlabel='')
-fig.savefig('crime_normality_plot.png', dpi=300)
+# fig.savefig('crime_normality_plot.png', dpi=300)
 
 # QQ Plot
 fig, ax = plt.subplots(figsize=(6,4))
 fig.suptitle('Crime QQ-Plot')
 fig.tight_layout(pad=3)
 pp = sm.ProbPlot(residuals, stats.norm, fit=True)
-qq = pp.qqplot(marker='.', markerfacecolor='darkorchid', markeredgecolor='darkorchid', alpha=0.8)
+qq = pp.qqplot(marker='.', ax=ax, markerfacecolor='darkorange', markeredgecolor='darkorange', alpha=0.8)
 sm.qqline(qq.axes[0], line='45', fmt='k--')
-fig.savefig('crime_qq_plot.png', dpi=300)
+# fig.savefig('crime_qq_plot.png', dpi=300)
 
 # Determine Regression 
 ols = LinearRegression()
@@ -229,4 +229,4 @@ linreg=LinearRegression()
 linreg.fit(x_train,y_train)
 y_pred=linreg.predict(x_test)
 sns.regplot(x=y_test,y=y_pred,ci=None,color ='red');
-fig.savefig('crime_test_train_predict_plot.png', dpi=300)
+# fig.savefig('crime_test_train_predict_plot.png', dpi=300)
