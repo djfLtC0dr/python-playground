@@ -264,8 +264,13 @@ COLUMN_NAMES=['steel']
 steel_data = pd.read_table(txt_file, delim_whitespace=True, header=None, names=COLUMN_NAMES,
                           lineterminator='\n')
 # print(steel_data.head())
-steel_std = np.std(steel_data['steel'])
-print('Steel stdev: %.4f'%steel_std)
+n = len(steel_data)
+s = 3.3
+steel_stddev = np.std(steel_data['steel'])
+tstat = ((n-1) * s**2) / steel_stddev**2
+print('steel tstat', tstat)
+print(stats.chi2.ppf(.975, df=n-1))
+print(stats.chi2.ppf(.025, df=n-1))
 
 '''Problem 8 Left Tail T-Test the mean chlorine content is =71ppm vs <71ppm '''
 # Import data file into a dataframe
