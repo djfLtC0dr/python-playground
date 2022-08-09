@@ -113,8 +113,8 @@ df_crime = x.assign(crime=y['Crime'])
 # Remove features which are not correlated with the response variable 
 plt.figure(figsize=(12,12))
 cor = df_crime.corr()
-sns.heatmap(cor, annot=True, cmap=plt.cm.Reds)
-plt.show()
+# sns.heatmap(cor, annot=True, cmap=plt.cm.Reds)
+# plt.show()
 
 # Consider correlations only with the target variable
 cor_target = abs(cor['crime'])
@@ -154,17 +154,44 @@ def get_stats():
     x = df_crime[x_columns]
     results = sm.OLS(y, x).fit()
     print(results.summary2())
+    return results
 get_stats()
 
 # remove the least statistically significant variable(s)
 x_columns.remove('Time') # pval 0.5860
-get_stats()
-x_columns.remove('Pop') # pval 0.1135
-get_stats()
+model_crime=get_stats()
+# x_columns.remove('Pop') # pval 0.1135
+# model_crime=get_stats()
 x_columns.remove('Ed') # pval 0.1178 
-get_stats()
+model_crime=get_stats()
 
-# TODO Run residual analysis (graphically) to determine if model is accurate.
+# Run residual analysis (graphically) to determine if model is accurate.
+#Pull residuals
+residuals = model_crime.resid
+fitted_values = model_crime.fittedvalues
+
+#plot Residuals vs Fitted Values
+
+fig, ax = plt.subplots(figsize=(12,8))
+ax.scatter(fitted_values, residuals, alpha=1.0, color='red')
+fig.suptitle('Residuals versus Fitted Values - Crime')
+plt.ylabel("Residual")
+plt.xlabel("Fitted Values")
+fig.tight_layout(pad=3)
+ax.grid(True)
+plt.axvline(x=min(fitted_values)+(max(fitted_values)-min(fitted_values))/3, color='darkblue')
+plt.axvline(x=min(fitted_values)+2*(max(fitted_values)-min(fitted_values))/3, color='darkblue')
+plt.axhline(y=0,color='black')
+
+# TODO Fix Regression 
+ols = LinearRegression()
+X = df_crime[x_columns]
+model = ols.fit(X, y)
+print(model.coef_)
+print(model.intercept_)
+# print(model.score(X, y))
+crime = - 4377.61884813 + 130.45943732 + 33.20264991 + (-0.23005445*10) + -2.33380057 + 47.7454367
+print('crime = ', crime)
 
 #*********************************************************
 from matplotlib.backends.backend_pdf import PdfPages
