@@ -5,10 +5,11 @@ import scipy.stats as stats
 import seaborn as sns
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
-from mlxtend.feature_selection import SequentialFeatureSelector as sfs
+# from mlxtend.feature_selection import SequentialFeatureSelector as sfs
 from sklearn.linear_model import LinearRegression
 from sklearn.feature_selection import VarianceThreshold
 from statsmodels.stats.outliers_influence import variance_inflation_factor
+from sklearn.model_selection import train_test_split
 
 '''Problem 1'''
 #Read the data 
@@ -160,9 +161,13 @@ get_stats()
 # remove the least statistically significant variable(s)
 x_columns.remove('Time') # pval 0.5860
 model_crime=get_stats()
-# x_columns.remove('Pop') # pval 0.1135
-# model_crime=get_stats()
 x_columns.remove('Ed') # pval 0.1178 
+model_crime=get_stats()
+x_columns.remove('U2') # pval  0.9761
+model_crime=get_stats()
+x_columns.remove('Pop') # pval 0.1786
+model_crime=get_stats()
+x_columns.remove('M.F') # pval 0.0599
 model_crime=get_stats()
 
 # Run residual analysis (graphically) to determine if model is accurate.
@@ -171,7 +176,6 @@ residuals = model_crime.resid
 fitted_values = model_crime.fittedvalues
 
 #plot Residuals vs Fitted Values
-
 fig, ax = plt.subplots(figsize=(12,8))
 ax.scatter(fitted_values, residuals, alpha=1.0, color='red')
 fig.suptitle('Residuals versus Fitted Values - Crime')
@@ -182,26 +186,47 @@ ax.grid(True)
 plt.axvline(x=min(fitted_values)+(max(fitted_values)-min(fitted_values))/3, color='darkblue')
 plt.axvline(x=min(fitted_values)+2*(max(fitted_values)-min(fitted_values))/3, color='darkblue')
 plt.axhline(y=0,color='black')
+# fig.savefig('crime_residuals_fitted.png', dpi=300)
 
-# TODO Fix Regression 
+#Normality Plots
+fig, (ax_box, ax_hist) = plt.subplots(2, sharex=True, gridspec_kw={"height_ratios": (.15, .85)},figsize=(12,8))
+sns.boxplot(residuals, ax=ax_box, color='darkorchid')
+sns.distplot(residuals, ax=ax_hist, color='orchid')
+ax_box.set(xlabel='')
+fig.savefig('crime_normality_plot.png', dpi=300)
+
+# QQ Plot
+fig, ax = plt.subplots(figsize=(6,4))
+fig.suptitle('Crime QQ-Plot')
+fig.tight_layout(pad=3)
+pp = sm.ProbPlot(residuals, stats.norm, fit=True)
+qq = pp.qqplot(marker='.', markerfacecolor='darkorchid', markeredgecolor='darkorchid', alpha=0.8)
+sm.qqline(qq.axes[0], line='45', fmt='k--')
+fig.savefig('crime_qq_plot.png', dpi=300)
+
+# Determine Regression 
 ols = LinearRegression()
 X = df_crime[x_columns]
 model = ols.fit(X, y)
-print(model.coef_)
-print(model.intercept_)
+# print(model.coef_)
+# print(model.intercept_)
 # print(model.score(X, y))
-crime = - 4377.61884813 + 130.45943732 + 33.20264991 + (-0.23005445*10) + -2.33380057 + 47.7454367
-print('crime = ', crime)
+A = model.intercept_[0]
+# print(A)
+X1 = model.coef_[0][0]
+# print(X1)
+X2 = model.coef_[0][1]
+# print(X2)
+crime = A + X1 + X2
+print('crime = ' + str(A) + ' + ' + str(X1) + ' + ' + str(X2) + ' => ' , crime)
 
-#*********************************************************
-from matplotlib.backends.backend_pdf import PdfPages
-# Save all figures to PDF
-def save_figs_pdf(filename, figs=None, dpi=200):
-    pp = PdfPages(filename)
-    if figs is None:
-        figs = [plt.figure(n) for n in plt.get_fignums()]
-    for fig in figs:
-        fig.savefig(pp, format='pdf')
-    pp.close()
-
-save_figs_pdf('hw6_plt_figs.pdf')
+# Plot our model using Test/Train Data
+fig, ax = plt.subplots(figsize=(6,4))
+fig.suptitle('Crime Test/Train Prediction Plot')
+fig.tight_layout(pad=3)
+x_train,x_test,y_train,y_test=train_test_split(X,y,test_size=0.2,random_state=0)
+linreg=LinearRegression()
+linreg.fit(x_train,y_train)
+y_pred=linreg.predict(x_test)
+sns.regplot(x=y_test,y=y_pred,ci=None,color ='red');
+fig.savefig('crime_test_train_predict_plot.png', dpi=300)
