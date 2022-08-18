@@ -14,54 +14,55 @@ class PdfData:
         s = s.replace('\n', '').replace('\u2019', "'")
         return s  
 
+    # Recursion to clean-up data
+    def recursively_apply(self, l, f):
+        for n, i in enumerate(l):
+            if isinstance(i, list): # check if i is type list
+                l[n] = self.recursively_apply(l[n], f)
+            elif isinstance(i, str): # check if i is type str
+                l[n] = f(i)
+            elif i is None:
+                l[n] = '' # nothing to replace there can be only one instance of None
+        return l    
+
+    def extract_data_from_tables(self) -> list:
+        # Load the PDF
+        pdf = pdfplumber.open(self.file_path)
+        list_wods = []
+        # Need to loop thru every other page of PDF_SC_LV_PAGES
+        for page in self.pages[::2]:
+            #print('pdf_page: ', page)
+            # Save data to a pandas dataframe.
+            # returns a list of lists, with each inner list representing a row in the table. 
+            p = pdf.pages[page]
+            list_wods.append(p.extract_tables())
+        return list_wods
+    
+    def clean_parse_data(self, lst_pdf_data) -> list:
+        # Iterate the lists and clean-up/parse strings
+        lst_wods = self.recursively_apply(lst_pdf_data, self.replace_chars)
+        # Get the data into a dataframe 
+        return lst_wods
+
     # Returns a formatted JSON string from data loaded from PDF
     def load_pdf_to_json(self) -> str: # JSON serialized string object
         json_formatted_str = ''
-        # Load the PDF
-        pdf = pdfplumber.open(self.file_path)
-        len_date_list = len(self.workout_dates)
-        i = 0
-        # Need to loop thru every other page of PDF_SC_LV_PAGES
-        while i < len_date_list:
-            for page in self.pages[::2]:
-                #print('pdf_page: ', page)
-                # Save data to a pandas dataframe.
-                # returns a list of lists, with each inner list representing a row in the table. 
-                p = pdf.pages[page]
-                list_wods = p.extract_tables() 
-
-                # Recursion to clean-up data
-                def recursively_apply(l, f):
-                    for n, i in enumerate(l):
-                        if isinstance(i, list): # check if i is type list
-                            l[n] = recursively_apply(l[n], f)
-                        elif isinstance(i, str): # check if i is type str
-                            l[n] = f(i)
-                        elif i is None:
-                            l[n] = '' # nothing to replace there can be only one instance of None
-                    return l
-                
-                # Iterate the lists and clean-up/parse strings
-                list_wods = recursively_apply(list_wods, self.replace_chars)
-                # Get the data into a dataframe 
-                lst_dfs = []
-                for l_wod in list_wods:
-                    while i < len_date_list:
-                        #print('date: ', i)
-                        wod_date = self.workout_dates[i]
-                        for wod in l_wod:
-                            # dictionary storing the data
-                            wod_data = {
-                                'Day': wod_date,
-                                'ROE': wod[0],
-                                'RPE': wod[1]
-                            }
-                            #create DataFrame by passing dictionary wrapped in a list
-                            odf = pd.DataFrame.from_dict([wod_data])
-                            lst_dfs.append(odf)
-                        i += 1
-                        df_wods = pd.concat(lst_dfs, ignore_index=True)
-                    wods_json_str = df_wods.to_json(orient='records')
-                obj_data = json.loads(wods_json_str)
-            json_formatted_str += json.dumps(obj_data, indent=4)  
+        # Get the data out of the PDF
+        lst_pdf_data = self.extract_data_from_tables()
+        # Clean data
+        lst_pdf_data = self.clean_parse_data(lst_pdf_data)
+        # Pass the list of lists into a DataFrame constructor
+        df_wods = pd.DataFrame(lst_pdf_data)
+        # len_date_list = len(self.workout_dates)
+        # df_wods = pd.DataFrame()
+        # i = 0
+        # while i < len_date_list:
+        #     wod_date = self.workout_dates[i]
+        #     lst_dfs = []
+        #     lst_dfs.append(self.parse_data_into_dataframe(lst_pdf_data, wod_date))
+        #     df_wods = df_wods.concat(lst_dfs, ignore_index=True)
+        #     i += 1
+        wods_json_str = df_wods.to_json(orient='records')
+        obj_data = json.loads(wods_json_str)
+        json_formatted_str += json.dumps(obj_data, indent=4)  
         return json_formatted_str
