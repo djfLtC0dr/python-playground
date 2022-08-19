@@ -44,6 +44,18 @@ class PdfData:
         # Get the data into a dataframe 
         return lst_wods
 
+    def assign_weekly_date_to_wod_data(self, df_wods) -> list:
+        lst_weekly_wod_data = []
+        i = 0
+        for wod_date in self.workout_dates[::5]: # 5-day "work week"
+            # iterate through each row and assign date
+            for idx in range(len(df_wods)):
+                ret = wod_date, *df_wods.iloc[i]
+                lst_weekly_wod_data.append(ret)
+                i += 1
+                break
+        return lst_weekly_wod_data
+
     # Returns a formatted JSON string from data loaded from PDF
     def load_pdf_to_json(self) -> str: # JSON serialized string object
         json_formatted_str = ''
@@ -53,16 +65,11 @@ class PdfData:
         lst_pdf_data = self.clean_parse_data(lst_pdf_data)
         # Pass the list of lists into a DataFrame constructor
         df_wods = pd.DataFrame(lst_pdf_data)
-        # len_date_list = len(self.workout_dates)
-        # df_wods = pd.DataFrame()
-        # i = 0
-        # while i < len_date_list:
-        #     wod_date = self.workout_dates[i]
-        #     lst_dfs = []
-        #     lst_dfs.append(self.parse_data_into_dataframe(lst_pdf_data, wod_date))
-        #     df_wods = df_wods.concat(lst_dfs, ignore_index=True)
-        #     i += 1
-        wods_json_str = df_wods.to_json(orient='records')
+        # print(df_wods)
+        col_names = ['start_week', 'day_1', 'day_2', 'day_3']
+        df_weekly_wods = pd.DataFrame(self.assign_weekly_date_to_wod_data(df_wods), columns=col_names)
+        # print(df_weekly_wods)
+        wods_json_str = df_weekly_wods.to_json(orient='records')
         obj_data = json.loads(wods_json_str)
         json_formatted_str += json.dumps(obj_data, indent=4)  
         return json_formatted_str

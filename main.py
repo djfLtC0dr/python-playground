@@ -44,7 +44,7 @@ except ValueError as e:
 
 try:
   # Cycle dates #end_dt = date(2022,2,25) 
-  start_dt, end_dt = date(2022,9,5), date(2022,9,30)
+  start_dt, end_dt = date(2022,9,5), date(2023,1,20)
   cycle = Cycle(start_dt, end_dt)
   # Obtain type of workout for follow-on processing
   if (gpp.TYPES[gpp.type] == 'GARAGE') or (gpp.TYPES[gpp.type] == 'ATHLETICS'):
