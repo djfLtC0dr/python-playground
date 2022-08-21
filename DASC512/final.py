@@ -24,6 +24,9 @@ subset_data = data[:456]
 
 # subset our test data
 test_data = data.tail(50)
+# drop unnecessary columns from our test dataset
+test_data.drop(['Census Tract', 'Y'], axis=1, inplace = True)
+# print(test_data)
 
 # create the training data
 y_column = ['Y']
@@ -103,9 +106,10 @@ model_median_value=get_stats()
 
 # TODO drop unnecessary columns from our test dataset
 # all except x_columns => ['X6', 'X11', 'X12', 'X1*X5', 'X4*X5', 'X5*X8']
-test_data.drop(['Census Tract', 'Y'], axis=1, inplace = True)
+# x_columns = ['X1', 'X2', 'X3', 'X5', 'X6', 'X7', 'X9', 'X10', 'X11', 'X12', 'X1*X5',
+#             'X4*X5', 'X5*X8']
+test_data.drop(['X1', 'X2', 'X3', 'X4', 'X5', 'X7', 'X8', 'X9','X10', 'X5*X6'], axis=1, inplace = True)
 print(test_data)
-print(x_columns)
 
 # Run residual analysis (graphically) to determine if model is accurate.
 #Pull residuals
