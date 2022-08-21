@@ -171,9 +171,15 @@ print('median_value = ' + str(A) + ' + ' + str(X11) + ' + ' + str(X12) +
 fig, ax = plt.subplots(figsize=(6,4))
 fig.suptitle('Median Value Owner-Occupied Homes Test/Train Prediction Plot')
 fig.tight_layout(pad=3)
-x_train,x_test,y_train,y_test=train_test_split(X,y,test_size=0.2,random_state=0)
+x_train,x_test,y_train,y_test=train_test_split(X,y,test_size=50,random_state=42)
 linreg=LinearRegression()
 linreg.fit(x_train,y_train)
-y_pred=linreg.predict(x_test)
+y_pred=linreg.predict(test_data)
 sns.regplot(x=y_test,y=y_pred,ci=None,color ='red');
 # fig.savefig('crime_test_train_predict_plot.png', dpi=300)
+
+score = linreg.score(x_test, y_pred)
+print(score)
+print(y_pred)     # see the predictions
+
+#TODO: Confidence intervals
