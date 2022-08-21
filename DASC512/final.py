@@ -104,12 +104,12 @@ x_columns.remove('X7') # pval 0.1492
 x_columns.remove('X3') # pval 0.0570
 model_median_value=get_stats()
 
-# TODO drop unnecessary columns from our test dataset
+# drop unnecessary columns from our test dataset
 # all except x_columns => ['X6', 'X11', 'X12', 'X1*X5', 'X4*X5', 'X5*X8']
 # x_columns = ['X1', 'X2', 'X3', 'X5', 'X6', 'X7', 'X9', 'X10', 'X11', 'X12', 'X1*X5',
 #             'X4*X5', 'X5*X8']
 test_data.drop(['X1', 'X2', 'X3', 'X4', 'X5', 'X7', 'X8', 'X9','X10', 'X5*X6'], axis=1, inplace = True)
-print(test_data)
+# print(test_data)
 
 # Run residual analysis (graphically) to determine if model is accurate.
 #Pull residuals
@@ -166,7 +166,6 @@ median_value = A + X11 + X12 + X1_X5 + X4_X5 + X5_X8
 print('median_value = ' + str(A) + ' + ' + str(X11) + ' + ' + str(X12) + 
     ' + ' + str(X1_X5) + ' + ' + str(X4_X5) + ' + ' + str(X5_X8) +' => ' , median_value)
 
-# TODO: set x_test to test_data
 # Plot our model using Test/Train Data
 fig, ax = plt.subplots(figsize=(6,4))
 fig.suptitle('Median Value Owner-Occupied Homes Test/Train Prediction Plot')
@@ -177,9 +176,5 @@ linreg.fit(x_train,y_train)
 y_pred=linreg.predict(test_data)
 sns.regplot(x=y_test,y=y_pred,ci=None,color ='red');
 # fig.savefig('crime_test_train_predict_plot.png', dpi=300)
-
-score = linreg.score(x_test, y_pred)
-print(score)
-print(y_pred)     # see the predictions
 
 #TODO: Confidence intervals
