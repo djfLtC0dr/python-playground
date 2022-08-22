@@ -19,20 +19,18 @@ data = pd.read_csv("student_data.csv", sep = ',')
 # data.info()
 
 # subset trng data to only data with Y values => first 456 records
-subset_data = data[:456]
+trng_data = data[:456]
 # subset_data.info()
 
-# subset our test data
-test_data = data.tail(50)
-# drop unnecessary columns from our test dataset
-test_data.drop(['Census Tract', 'Y'], axis=1, inplace = True)
+# subset our test data all columns except 'Census Tract' and 'Y'
+test_data = data.loc[456:506, ~data.columns.isin(['Census Tract', 'Y'])]
 # print(test_data)
 
 # create the training data
 y_column = ['Y']
-y = subset_data[y_column]
+y = trng_data[y_column]
 x_columns = ['X1','X2','X3','X4','X5','X6','X7','X8','X9','X10','X11','X12','X1*X5','X4*X5','X5*X6','X5*X8']
-x = subset_data[x_columns]
+x = trng_data[x_columns]
 
 # remove features w/ variance < 30% => features which mostly remain at the same level 
 # across different observations, should not ideally be responsible for differing responses in the observations.   
@@ -41,16 +39,16 @@ var = var.fit(x,y)
 cols = var.get_support(indices=True)
 features = x.columns[cols]
 # print(features)
-x = subset_data[features]
+x = trng_data[features]
 # print(x)
 
 # re-assign our df w/ only the features w/ variance > 30% + our target variable
-subset_data = x.assign(median_value=y['Y']) 
+trng_data = x.assign(median_value=y['Y']) 
 # print(subset_data)
 
 # Remove features which are not correlated with the response variable 
 # plt.figure(figsize=(12,12))
-cor = subset_data.corr()
+cor = trng_data.corr()
 # sns.heatmap(cor, annot=True, cmap=plt.cm.Reds)
 # plt.show()
 
@@ -65,7 +63,7 @@ x_columns = ['X1', 'X2', 'X3', 'X5', 'X6', 'X7', 'X9', 'X10', 'X11', 'X12', 'X1*
 
 # Figure out the multicollinearity features to remove via VIF
 def compute_vif(considered_features):
-    X = subset_data[considered_features]
+    X = trng_data[considered_features]
     # the calculation of variance inflation requires a constant
     X = X.assign(intercept=1)
     
@@ -89,9 +87,9 @@ vif_data = compute_vif(x_columns)
 
 ## creating function to get model statistics
 def get_stats():
-    x = subset_data[x_columns]
+    x = trng_data[x_columns]
     results = sm.OLS(y, x).fit()
-    print(results.summary2())
+    # print(results.summary2())
     return results
 
 # model_median_value = get_stats()
@@ -103,6 +101,7 @@ x_columns.remove('X9') # pval 0.4491
 x_columns.remove('X7') # pval 0.1492
 x_columns.remove('X3') # pval 0.0570
 model_median_value=get_stats()
+# print(model_median_value.summary2())
 
 # drop unnecessary columns from our test dataset
 # all except x_columns => ['X6', 'X11', 'X12', 'X1*X5', 'X4*X5', 'X5*X8']
@@ -148,33 +147,44 @@ sm.qqline(qq.axes[0], line='45', fmt='k--')
 
 # Determine Regression 
 ols = LinearRegression()
-X = subset_data[x_columns]
+X = trng_data[x_columns]
 model = ols.fit(X, y)
 # print(model.coef_)
 # print(model.intercept_)
 # print(model.score(X, y))
-A = model.intercept_[0]
+A = round(model.intercept_[0], 4)
 # print(A)
-X6 = model.coef_[0][0]
-X11 = model.coef_[0][1]
-X12 = model.coef_[0][2]
-X1_X5 = model.coef_[0][3]
-X4_X5 = model.coef_[0][4]
-X5_X8 = model.coef_[0][5]
+X6 = round(model.coef_[0][0], 4)
+X11 = round(model.coef_[0][1], 4)
+X12 = round(model.coef_[0][2], 4)
+X1_X5 = round(model.coef_[0][3], 4)
+X4_X5 = round(model.coef_[0][4], 4)
+X5_X8 = round(model.coef_[0][5], 4)
 
-median_value = A + X11 + X12 + X1_X5 + X4_X5 + X5_X8
+median_value = A + X6 + X11 + X12 + X1_X5 + X4_X5 + X5_X8
 print('median_value = ' + str(A) + ' + ' + str(X11) + ' + ' + str(X12) + 
     ' + ' + str(X1_X5) + ' + ' + str(X4_X5) + ' + ' + str(X5_X8) +' => ' , median_value)
 
 # Plot our model using Test/Train Data
-fig, ax = plt.subplots(figsize=(6,4))
+fig, ax = plt.subplots(figsize=(10,6))
 fig.suptitle('Median Value Owner-Occupied Homes Test/Train Prediction Plot')
 fig.tight_layout(pad=3)
 x_train,x_test,y_train,y_test=train_test_split(X,y,test_size=50,random_state=42)
 linreg=LinearRegression()
 linreg.fit(x_train,y_train)
-y_pred=linreg.predict(test_data)
-sns.regplot(x=y_test,y=y_pred,ci=None,color ='red');
-# fig.savefig('crime_test_train_predict_plot.png', dpi=300)
+#test_data = test_data = data[456:506] ['X6', 'X11', 'X12', 'X1*X5', 'X4*X5', 'X5*X8']
+arr_y_pred=linreg.predict(test_data) 
+y_pred_df = pd.DataFrame(arr_y_pred)
+y_pred_df.columns = ['y_pred']
+# print(y_pred_df['y_pred'])
+sns.regplot(x=y_test,y=y_pred_df,ci=95,marker='o',color ='blue')
+ax.grid()
 
-#TODO: Confidence intervals
+#calculate prediction intervals
+prediction=model_median_value.get_prediction(test_data)
+predints=prediction.summary_frame(alpha=0.05)
+# print(predints)
+
+ax.fill_between(y_pred_df['y_pred'], predints['mean_ci_lower'], predints['mean_ci_upper'], color='#888888', alpha=0.6)
+ax.fill_between(y_pred_df['y_pred'], predints['obs_ci_lower'], predints['obs_ci_upper'], color='#888888', alpha=0.2)
+# fig.savefig('median_value_test_train_predict_plot.png', dpi=300)
