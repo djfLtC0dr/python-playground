@@ -3,6 +3,7 @@
 # or loads data from a local PDF File or loads web/CSV data
 from wod import Cycle, Deuce, Gpp, Sslp, Tsac #PushJerk 
 from datetime import date
+from DASC512.final import final 
 import traceback
 '''GUI App
 import tkinter as tk
@@ -57,7 +58,8 @@ try:
     sslp = Sslp(start_dt=cycle.start_dt, end_dt =cycle.end_dt)
     print(sslp.cycle_wods_json)
   else:
-    print("That's a 'No-Rep!' Choose Option 4--Novice--to get a Novice Linear Progression Phase 1 Breakdown based on StartingStrength.com")
-    pass # NOPERATOR do nothing
+    # print("That's a 'No-Rep!' Choose Option 4--Novice--to get a Novice Linear Progression Phase 1 Breakdown based on StartingStrength.com")
+    # pass # NOPERATOR do nothing
+    final()
 except: 
   traceback.print_exc()        

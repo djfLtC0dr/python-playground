@@ -1,4 +1,3 @@
-import typing
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -9,6 +8,7 @@ import statsmodels.formula.api as smf
 import statsmodels.stats.api as sms
 import statsmodels.tsa.api as smt
 # from mlxtend.feature_selection import SequentialFeatureSelector as sfs
+from patsy import dmatrices
 from sklearn.linear_model import LinearRegression
 from sklearn.feature_selection import VarianceThreshold
 from statsmodels.stats.outliers_influence import variance_inflation_factor
@@ -20,7 +20,7 @@ import warnings
 warnings.simplefilter(action="ignore", category=SettingWithCopyWarning)
 
 # Read the data 
-data = pd.read_csv("student_data.csv", sep = ',')
+data = pd.read_csv("./DASC512/student_data.csv", sep = ',')
 # print(data)
 
 # explore data.
@@ -75,6 +75,7 @@ def linearity_test(model, y):
     sns.regplot(x=fitted_vals, y=resids, lowess=True, ax=ax[1], line_kws={'color': 'red'})
     ax[1].set_title('Residuals vs. Predicted Values', fontsize=16)
     ax[1].set(xlabel='Predicted', ylabel='Residuals')
+    fig.show()
     # fig.savefig('Linearity Test.png', dpi=300)
 
 def homoscedasticity_test(model):
@@ -98,6 +99,7 @@ def homoscedasticity_test(model):
     ax[1].set_title('Scale-Location', fontsize=16)
     ax[1].set(xlabel='Fitted Values', ylabel='sqrt(abs(Residuals))')
     # fig.savefig('Homoscedasticity Test.png', dpi=300)
+    fig.show()
 
     bp_test = pd.DataFrame(sms.het_breuschpagan(resids, model.model.exog),
                            columns=['value'],
@@ -123,6 +125,7 @@ def normality_of_residuals_test(model):
     fig = sm.ProbPlot(model.resid).qqplot(line='s')
     plt.title('Q-Q plot')
     # fig.savefig('Final_QQPlot.png', dpi=300)
+    fig.show()
 
     jb = stats.jarque_bera(model.resid)
     sw = stats.shapiro(model.resid)
@@ -163,7 +166,7 @@ x = trng_data[features]
 # print(x)
 
 # re-assign our df w/ only the features w/ variance > 30% + our target variable
-trng_data = x.assign(median_value=y['tY']) 
+trng_data = x.assign(tY=y['tY']) 
 # print(subset_data)
 
 # Remove features which are not correlated with the response variable 
@@ -173,7 +176,7 @@ cor = trng_data.corr()
 # plt.show()
 
 # Consider correlations only with the target variable
-cor_target = abs(cor['median_value'])
+cor_target = abs(cor['tY'])
 
 #Select correlations with a correlation above a threshold 10%.
 features = cor_target[cor_target>0.1]
@@ -207,7 +210,7 @@ vif_data = compute_vif(x_columns)
 
 # Deal w/ outliers
 x = trng_data[x_columns]
-trng_data = x.assign(median_value=y['tY']) 
+trng_data = x.assign(tY=y['tY']) 
 # trng_data.describe()
 Q1 = trng_data.quantile(0.25)
 Q3 = trng_data.quantile(0.75)
@@ -217,23 +220,20 @@ trng_data.drop(index, inplace=True)
 # trng_data.describe()
 # trng_data.info()
 x = trng_data[x_columns]
-y = trng_data['median_value']
+y = trng_data['tY']
 
 # fig.savefig('FinalPairPlot_x.png', dpi=300)
 
 
 # remove the least statistically significant features(s) i.e. pval > 0.05
-
-
 x_columns.remove('X12') # pval 0.9639 
 x_columns.remove('X3') # pval 0.5286
 # get_model_stats()
-
 x_columns.remove('X4*X5') # pval 0.1042 
 # x_columns.remove('X5') # pval 0.8135
-# x_columns.remove('X2') # pval 0.4938
-# x_columns.remove('X9') # pval 0.4491
-# x_columns.remove('X7') # pval 0.0522
+x_columns.remove('X2') # pval 0.2353
+x_columns.remove('X9') # pval 0.6558
+x_columns.remove('X7') # pval 0.0232
 # get_model_stats()
 # x_columns.remove('X3') # pval 0.0570
 
@@ -242,104 +242,99 @@ x_columns.remove('X4*X5') # pval 0.1042
 #TODO Skewdness ??
 # trng_data['X11'].hist()
 x = trng_data[x_columns]
-y = trng_data['median_value']
+y = trng_data['tY']
 
 model_median_value = sm.OLS(y, x).fit()
-linearity_test(model_median_value, y)
-homoscedasticity_test(model_median_value)
-normality_of_residuals_test(model_median_value)
 
-acf = smt.graphics.plot_acf(model_median_value.resid, lags=40 , alpha=0.05)
+y, X = dmatrices('tY ~ X5+X6+X11+Q("X1*X5")+Q("X5*X8")', data = trng_data, return_type ='dataframe')
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 50, random_state = 42)
+# med_val_test = X_test
+# med_val_test['Y'] = y_test
+print(model_median_value.summary2(alpha=0.05))
+vif = pd.DataFrame()
+vif["VIF Factor"] = [variance_inflation_factor(X.values, i) for i in range(X.shape[1])]
+vif["features"] = X.columns
+print(vif)
+
+lin_reg = sm.OLS(y,X).fit()
+print(lin_reg.summary())
+
+linearity_test(lin_reg, y)
+homoscedasticity_test(lin_reg)
+normality_of_residuals_test(lin_reg)
+
+acf = smt.graphics.plot_acf(lin_reg.resid, lags=40 , alpha=0.05)
 
 #Durbin Watson Test, the test statistic is between 0 and 4, <2 is positive correlation, >2 is negative correlation
 # As a rule of thumb, anything between 1.5 and 2.5 is OK
-DW = sms.durbin_watson(model_median_value.resid)
+DW = sms.durbin_watson(lin_reg.resid)
 print(DW)
-print(model_median_value.summary2())
+print(lin_reg.summary2())
+# print(X_test)
+# print(y_test)
+calculate_rmse(lin_reg, X_test, y_test)
 
+for column in X.columns:
+    corr_test = stats.stats.pearsonr(X[column], lin_reg.resid)
+    print(f'Variable: {column} --- correlation: {corr_test[0]:.4f}, p-value: {corr_test[1]:.4f}')
 
-# drop unnecessary columns from our test dataset
-# all except x_columns => ['X6', 'X11', 'X12', 'X1*X5', 'X4*X5', 'X5*X8']
-# x_columns = ['X1', 'X2', 'X3', 'X5', 'X6', 'X7', 'X9', 'X10', 'X11', 'X12', 'X1*X5',
-#             'X4*X5', 'X5*X8']
-test_data.drop(['X1', 'X2', 'X3', 'X4', 'X5', 'X7', 'X8', 'X9','X10', 'X5*X6'], axis=1, inplace = True)
-# print(test_data)
+###  Build Every Possible Model
+from itertools import chain, combinations
 
-# Run residual analysis (graphically) to determine if model is accurate.
-#Pull residuals
-residuals = model_median_value.resid
-fitted_values = model_median_value.fittedvalues
+def powerset(iterable):
+    s = list(iterable)
+    return chain.from_iterable(combinations(s, r) for r in range(1, len(s) + 1))
 
-#plot Residuals vs Fitted Values
-fig, ax = plt.subplots(figsize=(12,8))
-ax.scatter(fitted_values, residuals, alpha=1.0, color='red')
-fig.suptitle('Residuals versus Fitted Values - Median Value Owner-Occupied Homes')
-plt.ylabel("Residual")
-plt.xlabel("Fitted Values")
-fig.tight_layout(pad=3)
-ax.grid(True)
-plt.axvline(x=min(fitted_values)+(max(fitted_values)-min(fitted_values))/3, color='darkblue')
-plt.axvline(x=min(fitted_values)+2*(max(fitted_values)-min(fitted_values))/3, color='darkblue')
-plt.axhline(y=0,color='black')
-# fig.savefig('median_value_residuals_fitted.png', dpi=300)
+mylist = list(powerset(list(X.columns)))
+mylist = [list(row) for row in mylist]
 
-#Normality Plots
-fig, (ax_box, ax_hist) = plt.subplots(2, sharex=True, gridspec_kw={"height_ratios": (.15, .85)},figsize=(12,8))
-fig.suptitle('Normality Plots')
-sns.boxplot(data=residuals, ax=ax_box, color='darkorchid')
-sns.histplot(data=residuals, ax=ax_hist, color='orchid')
-ax_box.set(xlabel='')
-# fig.savefig('median_value_normality_plot.png', dpi=300)
+##Target is AIC
+AIC_scores = pd.DataFrame(columns=["AIC"])
+for i in range(len(mylist)):
+    AIC_scores.loc[i, 'AIC'] = sm.OLS(y, X[mylist[i]]).fit().aic
 
-# QQ Plot
-fig, ax = plt.subplots(figsize=(6,4))
-fig.suptitle('Median_Value QQ-Plot')
-fig.tight_layout(pad=3)
-pp = sm.ProbPlot(residuals, stats.norm, fit=True)
-qq = pp.qqplot(marker='.', ax=ax, markerfacecolor='darkorange', markeredgecolor='darkorange', alpha=0.8)
-sm.qqline(qq.axes[0], line='45', fmt='k--')
-# fig.savefig('crime_qq_plot.png', dpi=300)
+print(AIC_scores.sort_values(by='AIC').head())
 
-# Determine Regression 
-ols = LinearRegression()
-X = trng_data[x_columns]
-model = ols.fit(X, y)
-# print(model.coef_)
-# print(model.intercept_)
-# print(model.score(X, y))
-A = round(model.intercept_[0], 4)
-# print(A)
-X6 = round(model.coef_[0][0], 4)
-X11 = round(model.coef_[0][1], 4)
-X12 = round(model.coef_[0][2], 4)
-X1_X5 = round(model.coef_[0][3], 4)
-X4_X5 = round(model.coef_[0][4], 4)
-X5_X8 = round(model.coef_[0][5], 4)
+# # Determine Regression 
+# ols = LinearRegression()
+# X = trng_data[x_columns]
+# model = ols.fit(X, y)
+# # print(model.coef_)
+# # print(model.intercept_)
+# # print(model.score(X, y))
+# A = round(model.intercept_[0], 4)
+# # print(A)
+# X6 = round(model.coef_[0][0], 4)
+# X11 = round(model.coef_[0][1], 4)
+# X12 = round(model.coef_[0][2], 4)
+# X1_X5 = round(model.coef_[0][3], 4)
+# X4_X5 = round(model.coef_[0][4], 4)
+# X5_X8 = round(model.coef_[0][5], 4)
 
-median_value = A + X6 + X11 + X12 + X1_X5 + X4_X5 + X5_X8
-print('median_value = ' + str(A) + ' + ' + str(X11) + ' + ' + str(X12) + 
-    ' + ' + str(X1_X5) + ' + ' + str(X4_X5) + ' + ' + str(X5_X8) +' => ' , median_value)
+# median_value = A + X6 + X11 + X12 + X1_X5 + X4_X5 + X5_X8
+# print('median_value = ' + str(A) + ' + ' + str(X11) + ' + ' + str(X12) + 
+#     ' + ' + str(X1_X5) + ' + ' + str(X4_X5) + ' + ' + str(X5_X8) +' => ' , median_value)
 
-# Plot our model using Test/Train Data
-fig, ax = plt.subplots(figsize=(10,6))
-fig.suptitle('Median Value Owner-Occupied Homes Test/Train Prediction Plot')
-fig.tight_layout(pad=3)
-x_train,x_test,y_train,y_test=train_test_split(X,y,test_size=50,random_state=42)
-linreg=LinearRegression()
-linreg.fit(x_train,y_train)
-#test_data = test_data = data[456:506] ['X6', 'X11', 'X12', 'X1*X5', 'X4*X5', 'X5*X8']
-arr_y_pred=linreg.predict(test_data) 
-y_pred_df = pd.DataFrame(arr_y_pred)
-y_pred_df.columns = ['y_pred']
-# print(y_pred_df['y_pred'])
-sns.regplot(x=y_test,y=y_pred_df,ci=95,marker='o',color ='blue')
-ax.grid()
+# # Plot our model using Test/Train Data
+# fig, ax = plt.subplots(figsize=(10,6))
+# fig.suptitle('Median Value Owner-Occupied Homes Test/Train Prediction Plot')
+# fig.tight_layout(pad=3)
+# x_train,x_test,y_train,y_test=train_test_split(X,y,test_size=50,random_state=42)
+# linreg=LinearRegression()
+# linreg.fit(x_train,y_train)
+# #test_data = test_data = data[456:506] ['X6', 'X11', 'X12', 'X1*X5', 'X4*X5', 'X5*X8']
+# arr_y_pred=linreg.predict(test_data) 
+# y_pred_df = pd.DataFrame(arr_y_pred)
+# y_pred_df.columns = ['y_pred']
+# # print(y_pred_df['y_pred'])
+# sns.regplot(x=y_test,y=y_pred_df,ci=95,marker='o',color ='blue')
+# ax.grid()
 
-#calculate prediction intervals
-prediction=model_median_value.get_prediction(test_data)
-predints=prediction.summary_frame(alpha=0.05)
-# print(predints)
+# #calculate prediction intervals
+# prediction=model_median_value.get_prediction(test_data)
+# predints=prediction.summary_frame(alpha=0.05)
+# # print(predints)
 
-ax.fill_between(y_pred_df['y_pred'], predints['mean_ci_lower'], predints['mean_ci_upper'], color='#888888', alpha=0.6)
-ax.fill_between(y_pred_df['y_pred'], predints['obs_ci_lower'], predints['obs_ci_upper'], color='#888888', alpha=0.2)
+# ax.fill_between(y_pred_df['y_pred'], predints['mean_ci_lower'], predints['mean_ci_upper'], color='#888888', alpha=0.6)
+# ax.fill_between(y_pred_df['y_pred'], predints['obs_ci_lower'], predints['obs_ci_upper'], color='#888888', alpha=0.2)
 # fig.savefig('median_value_test_train_predict_plot.png', dpi=300)

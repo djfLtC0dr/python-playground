@@ -161,7 +161,6 @@ lin_reg = sm.OLS(y,X).fit()
 print(lin_reg.summary())
 
 linearity_test(lin_reg, y)
-
 homoscedasticity_test(lin_reg)
 
 acf = smt.graphics.plot_acf(lin_reg.resid, lags=40 , alpha=0.05)
