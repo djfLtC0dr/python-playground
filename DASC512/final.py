@@ -1,3 +1,4 @@
+import typing
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -5,11 +6,18 @@ import scipy.stats as stats
 import seaborn as sns
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
+import statsmodels.stats.api as sms
+import statsmodels.tsa.api as smt
 # from mlxtend.feature_selection import SequentialFeatureSelector as sfs
 from sklearn.linear_model import LinearRegression
 from sklearn.feature_selection import VarianceThreshold
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error
+from pandas.core.common import SettingWithCopyWarning
+import warnings
+
+warnings.simplefilter(action="ignore", category=SettingWithCopyWarning)
 
 # Read the data 
 data = pd.read_csv("student_data.csv", sep = ',')
@@ -27,10 +35,122 @@ test_data = data.loc[456:506, ~data.columns.isin(['Census Tract', 'Y'])]
 # print(test_data)
 
 # create the training data
-y_column = ['Y']
-y = trng_data[y_column]
 x_columns = ['X1','X2','X3','X4','X5','X6','X7','X8','X9','X10','X11','X12','X1*X5','X4*X5','X5*X6','X5*X8']
 x = trng_data[x_columns]
+# fig = sns.pairplot(y)
+# skewed right Y so transform
+trng_data['tY'], boxlambda = stats.boxcox(trng_data['Y'])
+# print(trng_data['tY'])
+ty = pd.DataFrame(trng_data['tY'])
+# fig = sns.pairplot(ty)
+
+trng_data = x.assign(tY=ty['tY']) 
+y_column = ['tY']
+y = trng_data[y_column]
+
+## creating function to get model statistics
+def get_model_stats():
+    x = trng_data[x_columns]
+    results = sm.OLS(y, x).fit()
+    print(results.summary2())
+    return results
+
+def linearity_test(model, y):
+    '''
+    Function for visually inspecting the assumption of linearity in a linear regression model.
+    It plots observed vs. predicted values and residuals vs. predicted values.
+    Args:
+    * model - fitted OLS model from statsmodels
+    * y - observed values
+    '''
+    fitted_vals = model.predict()
+    resids = model.resid
+
+    fig, ax = plt.subplots(1, 2)
+
+    sns.regplot(x=fitted_vals, y=y, lowess=True, ax=ax[0], line_kws={'color': 'red'})
+    ax[0].set_title('Observed vs. Predicted Values', fontsize=16)
+    ax[0].set(xlabel='Predicted', ylabel='Observed')
+
+    sns.regplot(x=fitted_vals, y=resids, lowess=True, ax=ax[1], line_kws={'color': 'red'})
+    ax[1].set_title('Residuals vs. Predicted Values', fontsize=16)
+    ax[1].set(xlabel='Predicted', ylabel='Residuals')
+    # fig.savefig('Linearity Test.png', dpi=300)
+
+def homoscedasticity_test(model):
+    '''
+    Function for testing the homoscedasticity of residuals in a linear regression model.
+    It plots residuals and standardized residuals vs. fitted values and runs Breusch-Pagan and Goldfeld-Quandt tests.
+    Args:
+    * model - fitted OLS model from statsmodels
+    '''
+    fitted_vals = model.predict()
+    resids = model.resid
+    resids_standardized = model.get_influence().resid_studentized_internal
+
+    fig, ax = plt.subplots(1, 2)
+
+    sns.regplot(x=fitted_vals, y=resids, lowess=True, ax=ax[0], line_kws={'color': 'red'})
+    ax[0].set_title('Residuals vs Fitted', fontsize=16)
+    ax[0].set(xlabel='Fitted Values', ylabel='Residuals')
+
+    sns.regplot(x=fitted_vals, y=np.sqrt(np.abs(resids_standardized)), lowess=True, ax=ax[1], line_kws={'color': 'red'})
+    ax[1].set_title('Scale-Location', fontsize=16)
+    ax[1].set(xlabel='Fitted Values', ylabel='sqrt(abs(Residuals))')
+    # fig.savefig('Homoscedasticity Test.png', dpi=300)
+
+    bp_test = pd.DataFrame(sms.het_breuschpagan(resids, model.model.exog),
+                           columns=['value'],
+                           index=['Lagrange multiplier statistic', 'p-value', 'f-value', 'f p-value'])
+
+    gq_test = pd.DataFrame(sms.het_goldfeldquandt(resids, model.model.exog)[:-1],
+                           columns=['value'],
+                           index=['F statistic', 'p-value'])
+
+    print('\n Breusch-Pagan test ----')
+    print(bp_test)
+    print('\n Goldfeld-Quandt test ----')
+    print(gq_test)
+    print('\n Residuals plots ----')
+
+def normality_of_residuals_test(model):
+    '''
+    Function for drawing the normal QQ-plot of the residuals and running 4 statistical tests to
+    investigate the normality of residuals.
+    Arg:
+    * model - fitted OLS models from statsmodels
+    '''
+    fig = sm.ProbPlot(model.resid).qqplot(line='s')
+    plt.title('Q-Q plot')
+    # fig.savefig('Final_QQPlot.png', dpi=300)
+
+    jb = stats.jarque_bera(model.resid)
+    sw = stats.shapiro(model.resid)
+    ad = stats.anderson(model.resid, dist='norm')
+    ks = stats.kstest(model.resid, 'norm')
+
+    print(f'Jarque-Bera test ---- statistic: {jb[0]:.4f}, p-value: {jb[1]}')
+    print(f'Shapiro-Wilk test ---- statistic: {sw[0]:.4f}, p-value: {sw[1]:.4f}')
+    print(f'Kolmogorov-Smirnov test ---- statistic: {ks.statistic:.4f}, p-value: {ks.pvalue:.4f}')
+    print(f'Anderson-Darling test ---- statistic: {ad.statistic:.4f}, 5% critical value: {ad.critical_values[2]:.4f}')
+    print('If the returned AD statistic is larger than the critical value, then for the 5% significance level, the null hypothesis that the data come from the Normal distribution should be rejected. ')
+
+def calculate_rmse(model, X_test, y_test):
+    '''
+    Function for calculating the rmse of a test set
+    Parameters
+    ----------
+    model : OLS model from Statsmodels ( formula or regular )
+    X_test : Test inputs ( MUST MATCH MODEL INPUTS )
+    y_test : Test outputs ( MUST INCLUDE ANY TRANFORMATIONS TO MODEL OUTPUTS )
+    Returns
+    -------
+    Returns RMSE printed in the console
+    '''
+    predicted = model.predict(X_test)
+    MSE = mean_squared_error(y_test, predicted)
+    rmse = np.sqrt(MSE)
+    print(rmse)
 
 # remove features w/ variance < 30% => features which mostly remain at the same level 
 # across different observations, should not ideally be responsible for differing responses in the observations.   
@@ -43,7 +163,7 @@ x = trng_data[features]
 # print(x)
 
 # re-assign our df w/ only the features w/ variance > 30% + our target variable
-trng_data = x.assign(median_value=y['Y']) 
+trng_data = x.assign(median_value=y['tY']) 
 # print(subset_data)
 
 # Remove features which are not correlated with the response variable 
@@ -85,23 +205,58 @@ x_columns.remove('X10') # VIF 6.349784
 vif_data = compute_vif(x_columns)
 # print(vif_data)
 
-## creating function to get model statistics
-def get_stats():
-    x = trng_data[x_columns]
-    results = sm.OLS(y, x).fit()
-    # print(results.summary2())
-    return results
+# Deal w/ outliers
+x = trng_data[x_columns]
+trng_data = x.assign(median_value=y['tY']) 
+# trng_data.describe()
+Q1 = trng_data.quantile(0.25)
+Q3 = trng_data.quantile(0.75)
+IQR = Q3 - Q1
+index = trng_data[~((trng_data < (Q1 - 1.5 * IQR)) | (trng_data > (Q3 + 1.5 * IQR))).any(axis=1)].index
+trng_data.drop(index, inplace=True)
+# trng_data.describe()
+# trng_data.info()
+x = trng_data[x_columns]
+y = trng_data['median_value']
 
-# model_median_value = get_stats()
+# fig.savefig('FinalPairPlot_x.png', dpi=300)
+
 
 # remove the least statistically significant features(s) i.e. pval > 0.05
-x_columns.remove('X5') # pval 0.8135
-x_columns.remove('X2') # pval 0.4938
-x_columns.remove('X9') # pval 0.4491
-x_columns.remove('X7') # pval 0.1492
-x_columns.remove('X3') # pval 0.0570
-model_median_value=get_stats()
-# print(model_median_value.summary2())
+
+
+x_columns.remove('X12') # pval 0.9639 
+x_columns.remove('X3') # pval 0.5286
+# get_model_stats()
+
+x_columns.remove('X4*X5') # pval 0.1042 
+# x_columns.remove('X5') # pval 0.8135
+# x_columns.remove('X2') # pval 0.4938
+# x_columns.remove('X9') # pval 0.4491
+# x_columns.remove('X7') # pval 0.0522
+# get_model_stats()
+# x_columns.remove('X3') # pval 0.0570
+
+# fig = sns.pairplot(x)
+
+#TODO Skewdness ??
+# trng_data['X11'].hist()
+x = trng_data[x_columns]
+y = trng_data['median_value']
+
+model_median_value = sm.OLS(y, x).fit()
+linearity_test(model_median_value, y)
+homoscedasticity_test(model_median_value)
+normality_of_residuals_test(model_median_value)
+
+acf = smt.graphics.plot_acf(model_median_value.resid, lags=40 , alpha=0.05)
+
+#Durbin Watson Test, the test statistic is between 0 and 4, <2 is positive correlation, >2 is negative correlation
+# As a rule of thumb, anything between 1.5 and 2.5 is OK
+DW = sms.durbin_watson(model_median_value.resid)
+print(DW)
+print(model_median_value.summary2())
+
 
 # drop unnecessary columns from our test dataset
 # all except x_columns => ['X6', 'X11', 'X12', 'X1*X5', 'X4*X5', 'X5*X8']
