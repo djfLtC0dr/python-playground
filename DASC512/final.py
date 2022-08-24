@@ -30,10 +30,6 @@ data = pd.read_csv("./DASC512/student_data.csv", sep = ',')
 trng_data = data[:456]
 # subset_data.info()
 
-# subset our test data all columns except 'Census Tract' and 'Y'
-test_data = data.loc[456:506, ~data.columns.isin(['Census Tract', 'Y'])]
-# print(test_data)
-
 # create the training data
 x_columns = ['X1','X2','X3','X4','X5','X6','X7','X8','X9','X10','X11','X12','X1*X5','X4*X5','X5*X6','X5*X8']
 x = trng_data[x_columns]
@@ -76,7 +72,7 @@ def linearity_test(model, y):
     ax[1].set_title('Residuals vs. Predicted Values', fontsize=16)
     ax[1].set(xlabel='Predicted', ylabel='Residuals')
     fig.show()
-    # fig.savefig('Linearity Test.png', dpi=300)
+    fig.savefig('./DASC512/finalLinearityTest.png', dpi=300)
 
 def homoscedasticity_test(model):
     '''
@@ -98,7 +94,7 @@ def homoscedasticity_test(model):
     sns.regplot(x=fitted_vals, y=np.sqrt(np.abs(resids_standardized)), lowess=True, ax=ax[1], line_kws={'color': 'red'})
     ax[1].set_title('Scale-Location', fontsize=16)
     ax[1].set(xlabel='Fitted Values', ylabel='sqrt(abs(Residuals))')
-    # fig.savefig('Homoscedasticity Test.png', dpi=300)
+    fig.savefig('./DASC512/finalHomoscedasticityTest.png', dpi=300)
     fig.show()
 
     bp_test = pd.DataFrame(sms.het_breuschpagan(resids, model.model.exog),
@@ -124,7 +120,7 @@ def normality_of_residuals_test(model):
     '''
     fig = sm.ProbPlot(model.resid).qqplot(line='s')
     plt.title('Q-Q plot')
-    # fig.savefig('Final_QQPlot.png', dpi=300)
+    fig.savefig('./DASC512/finalQQPlot.png', dpi=300)
     fig.show()
 
     jb = stats.jarque_bera(model.resid)
@@ -264,6 +260,7 @@ homoscedasticity_test(lin_reg)
 normality_of_residuals_test(lin_reg)
 
 acf = smt.graphics.plot_acf(lin_reg.resid, lags=40 , alpha=0.05)
+acf.savefig('./DASC512/finalACF.png', dpi=300)
 
 #Durbin Watson Test, the test statistic is between 0 and 4, <2 is positive correlation, >2 is negative correlation
 # As a rule of thumb, anything between 1.5 and 2.5 is OK
@@ -294,47 +291,47 @@ for i in range(len(mylist)):
     AIC_scores.loc[i, 'AIC'] = sm.OLS(y, X[mylist[i]]).fit().aic
 
 print(AIC_scores.sort_values(by='AIC').head())
+# print(mylist[62]) 
+#=> ['Intercept', 'X5', 'X6', 'X11', 'Q("X1*X5")', 'Q("X5*X8")']
 
-# # Determine Regression 
-# ols = LinearRegression()
-# X = trng_data[x_columns]
-# model = ols.fit(X, y)
-# # print(model.coef_)
-# # print(model.intercept_)
-# # print(model.score(X, y))
-# A = round(model.intercept_[0], 4)
-# # print(A)
-# X6 = round(model.coef_[0][0], 4)
-# X11 = round(model.coef_[0][1], 4)
-# X12 = round(model.coef_[0][2], 4)
-# X1_X5 = round(model.coef_[0][3], 4)
-# X4_X5 = round(model.coef_[0][4], 4)
-# X5_X8 = round(model.coef_[0][5], 4)
+# print(lin_reg.params)
+A = round(lin_reg.params['Intercept'], 4)
+# print(A)
+X5 = round(lin_reg.params['X5'], 4)
+X6 = round(lin_reg.params['X6'], 4)
+X11 = round(lin_reg.params['X11'], 4)
+X1_X5 = round(lin_reg.params['Q("X1*X5")'], 4)
+X5_X8 = round(lin_reg.params['Q("X5*X8")'], 4)
 
-# median_value = A + X6 + X11 + X12 + X1_X5 + X4_X5 + X5_X8
-# print('median_value = ' + str(A) + ' + ' + str(X11) + ' + ' + str(X12) + 
-#     ' + ' + str(X1_X5) + ' + ' + str(X4_X5) + ' + ' + str(X5_X8) +' => ' , median_value)
+median_value = A + X5 + X6 + X11 + X1_X5 + X5_X8
+print('median_value = ' + str(A) + ' + ' + str(X5) + ' + ' + str(X6) + 
+    ' + ' + str(X11) + ' + ' + str(X1_X5) + ' + ' + str(X5_X8))
 
-# # Plot our model using Test/Train Data
-# fig, ax = plt.subplots(figsize=(10,6))
-# fig.suptitle('Median Value Owner-Occupied Homes Test/Train Prediction Plot')
-# fig.tight_layout(pad=3)
-# x_train,x_test,y_train,y_test=train_test_split(X,y,test_size=50,random_state=42)
-# linreg=LinearRegression()
-# linreg.fit(x_train,y_train)
-# #test_data = test_data = data[456:506] ['X6', 'X11', 'X12', 'X1*X5', 'X4*X5', 'X5*X8']
-# arr_y_pred=linreg.predict(test_data) 
-# y_pred_df = pd.DataFrame(arr_y_pred)
-# y_pred_df.columns = ['y_pred']
-# # print(y_pred_df['y_pred'])
-# sns.regplot(x=y_test,y=y_pred_df,ci=95,marker='o',color ='blue')
-# ax.grid()
+# Plot our model using Test Data to determine our y_pred
+fig, ax = plt.subplots(figsize=(10,6))
+fig.suptitle('Median Value Owner-Occupied Homes Test/Train Prediction Plot')
+fig.tight_layout(pad=3)
 
-# #calculate prediction intervals
-# prediction=model_median_value.get_prediction(test_data)
-# predints=prediction.summary_frame(alpha=0.05)
-# # print(predints)
+# subset our test data to align with our model
+test_data = data.loc[456:506, data.columns.isin(['Y', 'X5', 'X6', 'X11', 'X1*X5', 'X5*X8'])]
+# print(test_data)
+X = test_data.loc[:, test_data.columns != 'Y']
+y = test_data.loc[:, test_data.columns == 'Y']
+X=sm.add_constant(X)
 
-# ax.fill_between(y_pred_df['y_pred'], predints['mean_ci_lower'], predints['mean_ci_upper'], color='#888888', alpha=0.6)
-# ax.fill_between(y_pred_df['y_pred'], predints['obs_ci_lower'], predints['obs_ci_upper'], color='#888888', alpha=0.2)
-# fig.savefig('median_value_test_train_predict_plot.png', dpi=300)
+# X_train, X_test, y_train, y_test = train_test_split(X, y,
+#                                         test_size=50, random_state=42)
+
+# test_model = sm.OLS(y,X).fit()
+y_pred = lin_reg.predict(X)
+print(y_pred)
+y_pred_df = pd.DataFrame(y_pred)
+# print(y_pred_df)
+sns.regplot(x=y_test,y=y_pred_df,ci=95,marker='o',color ='blue')
+ax.grid()
+fig.savefig('./DASC512/finalPredictionPlot.png', dpi=300)
+
+#calculate prediction intervals
+prediction=lin_reg.get_prediction(test_data)
+predints=prediction.summary_frame(alpha=0.05)
+# print(predints)
