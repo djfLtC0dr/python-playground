@@ -10,6 +10,11 @@ import statsmodels.tsa.api as smt
 # from mlxtend.feature_selection import SequentialFeatureSelector as sfs
 from patsy import dmatrices
 from sklearn.linear_model import LinearRegression
+from sklearn.metrics import accuracy_score
+from sklearn.model_selection import cross_val_score
+from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.preprocessing import FunctionTransformer
 from sklearn.feature_selection import VarianceThreshold
 from scipy.special import inv_boxcox
 from statsmodels.stats.outliers_influence import variance_inflation_factor
@@ -133,22 +138,17 @@ data = pd.read_csv("./DASC512/student_data.csv", sep = ',')
 # explore data.
 # data.info()
 
-# subset trng data to only data with Y values => first 456 records
+# Fill the missing values of the 'Y' column with the median of the non-missing values
+# data['Y'].fillna(data['Y'].median(),inplace=True)
+
+# subset trng data to only data with non-missing Y values => first 456 records
 trng_data = data[:456]
 # subset_data.info()
 
 # create the training data
 x_columns = ['X1','X2','X3','X4','X5','X6','X7','X8','X9','X10','X11','X12','X1*X5','X4*X5','X5*X6','X5*X8']
 x = trng_data[x_columns]
-# fig = sns.pairplot(y)
-# skewed right Y so transform
-trng_data['tY'], boxlambda = stats.boxcox(trng_data['Y'])
-# print(trng_data['tY'])
-ty = pd.DataFrame(trng_data['tY'])
-# fig = sns.pairplot(ty)
-
-trng_data = x.assign(tY=ty['tY']) 
-y_column = ['tY']
+y_column = ['Y']
 y = trng_data[y_column]
 
 # remove features w/ variance < 30% => features which mostly remain at the same level 
@@ -162,7 +162,7 @@ x = trng_data[features]
 # print(x)
 
 # re-assign our df w/ only the features w/ variance > 30% + our target variable
-trng_data = x.assign(tY=y['tY']) 
+trng_data = x.assign(Y=y['Y']) 
 # print(subset_data)
 
 # Remove features which are not correlated with the response variable 
@@ -172,7 +172,7 @@ cor = trng_data.corr()
 # plt.show()
 
 # Consider correlations only with the target variable
-cor_target = abs(cor['tY'])
+cor_target = abs(cor['Y'])
 
 #Select correlations with a correlation above a threshold 10%.
 features = cor_target[cor_target>0.1]
@@ -204,9 +204,9 @@ x_columns.remove('X10') # VIF 6.349784
 vif_data = compute_vif(x_columns)
 # print(vif_data)
 
-# Deal w/ outliers
+# Drop outliers
 x = trng_data[x_columns]
-trng_data = x.assign(tY=y['tY']) 
+trng_data = x.assign(Y=y['Y']) 
 # trng_data.describe()
 Q1 = trng_data.quantile(0.25)
 Q3 = trng_data.quantile(0.75)
@@ -216,9 +216,7 @@ trng_data.drop(index, inplace=True)
 # trng_data.describe()
 # trng_data.info()
 x = trng_data[x_columns]
-y = trng_data['tY']
-
-# fig.savefig('FinalPairPlot_x.png', dpi=300)
+y = trng_data['Y']
 
 # remove the least statistically significant features(s) i.e. pval > 0.05
 x_columns.remove('X12') # pval 0.9639 
@@ -232,12 +230,35 @@ x_columns.remove('X7') # pval 0.0232
 # get_model_stats()
 # x_columns.remove('X3') # pval 0.0570
 
+X = trng_data[x_columns]
 # fig = sns.pairplot(x)
+# fig.savefig('./DASC512/finalPairPlot_x.png', dpi=300)
+y = trng_data['Y']
 
-x = trng_data[x_columns]
-y = trng_data['tY']
-
-# model_median_value = sm.OLS(y, x).fit()
+# Transform our non-normal data
+# fig = sns.pairplot(y)
+# skewed right Y so transform
+trng_data['tY'], boxlambda = stats.boxcox(trng_data['Y'])
+# print(trng_data['tY'])
+# ty = pd.DataFrame(trng_data['tY'])
+# fig = sns.pairplot(ty)
+trng_data['log_Y'] = np.log(trng_data['Y'])
+trng_data['inv_Y'] = 1/trng_data['Y']
+trng_data['Y_sqrd'] = trng_data['Y']**2
+Y_mean = np.mean(trng_data['Y'])
+trng_data['center_Y'] = trng_data['Y'] - Y_mean
+trng_data['log_X5'] = np.log(trng_data['X5'])
+trng_data['inv_X5'] = 1/trng_data['X5']
+X5_mean = np.mean(trng_data['X5'])
+trng_data['center_X5'] = trng_data['X5'] - X5_mean
+trng_data['log_X11'] = np.log(trng_data['X11'])
+trng_data['inv_X11'] = 1/trng_data['X11']
+X11_mean = np.mean(trng_data['X11'])
+trng_data['center_X11'] = trng_data['X11'] - X11_mean
+trng_data['log_X1*X5'] = np.log(trng_data['X1*X5'])
+trng_data['inv_X1*X5'] = 1/trng_data['X1*X5']
+X1X5_mean = np.mean(trng_data['X1*X5'])
+trng_data['center_X1*X5'] = trng_data['X1*X5'] - X1X5_mean
 
 y, X = dmatrices('tY ~ X5+X6+X11+Q("X1*X5")+Q("X5*X8")', data = trng_data, return_type ='dataframe')
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 50, random_state = 42)
@@ -326,7 +347,7 @@ y_pred = lin_reg.predict(X)
 y_pred_df = pd.DataFrame(y_pred)
 y_test_inv_boxcox = inv_boxcox(y_test, boxlambda)
 y_pred_inv_boxcox = inv_boxcox(y_pred_df, boxlambda)
-print(y_pred_inv_boxcox)
+# print(y_pred_inv_boxcox)
 sns.regplot(x=y_test_inv_boxcox,y=y_pred_inv_boxcox,ci=95,marker='o',color ='blue')
 ax.grid()
 fig.savefig('./DASC512/finalPredictionPlot.png', dpi=300)
@@ -334,9 +355,16 @@ fig.savefig('./DASC512/finalPredictionPlot.png', dpi=300)
 #calculate prediction intervals
 prediction=lin_reg.get_prediction(X)
 predints=prediction.summary_frame(alpha=0.05)
-print(inv_boxcox(predints['obs_ci_lower'], boxlambda))
-print(inv_boxcox(predints['obs_ci_upper'], boxlambda))
-print(predints)
+obs_ci_lower = inv_boxcox(predints['obs_ci_lower'], boxlambda)
+obs_ci_upper = inv_boxcox(predints['obs_ci_upper'], boxlambda)
+# print(predints)
 
-#TODO: Put the final prints into a dataframe => 
-# Census Tract’, ‘Prediction’, ‘Lower Prediction CI’, ‘Upper Prediction CI
+# Put the final predictions into a dataframe => 
+# 'Census Tract’, ‘Prediction’, ‘Lower Prediction CI’, ‘Upper Prediction CI'
+preds_df = pd.DataFrame(data.loc[456:, data.columns.isin(['Census Tract'])])
+# adding lists as new column to dataframe df
+preds_df['Prediction'] = y_pred_inv_boxcox
+preds_df['Lower Prediction CI'] = obs_ci_lower
+preds_df['Upper Prediction CI'] = obs_ci_upper
+# converting to CSV file
+preds_df.to_csv("./DASC512/Fawcett_Daniel.csv", encoding = 'utf-8', index = False)
