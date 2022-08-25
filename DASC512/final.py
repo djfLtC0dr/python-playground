@@ -11,6 +11,7 @@ import statsmodels.tsa.api as smt
 from patsy import dmatrices
 from sklearn.linear_model import LinearRegression
 from sklearn.feature_selection import VarianceThreshold
+from scipy.special import inv_boxcox
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
@@ -19,32 +20,6 @@ import warnings
 
 warnings.simplefilter(action="ignore", category=SettingWithCopyWarning)
 
-# Read the data 
-data = pd.read_csv("./DASC512/student_data.csv", sep = ',')
-# print(data)
-
-# explore data.
-# data.info()
-
-# subset trng data to only data with Y values => first 456 records
-trng_data = data[:456]
-# subset_data.info()
-
-# create the training data
-x_columns = ['X1','X2','X3','X4','X5','X6','X7','X8','X9','X10','X11','X12','X1*X5','X4*X5','X5*X6','X5*X8']
-x = trng_data[x_columns]
-# fig = sns.pairplot(y)
-# skewed right Y so transform
-trng_data['tY'], boxlambda = stats.boxcox(trng_data['Y'])
-# print(trng_data['tY'])
-ty = pd.DataFrame(trng_data['tY'])
-# fig = sns.pairplot(ty)
-
-trng_data = x.assign(tY=ty['tY']) 
-y_column = ['tY']
-y = trng_data[y_column]
-
-## creating function to get model statistics
 def get_model_stats():
     x = trng_data[x_columns]
     results = sm.OLS(y, x).fit()
@@ -65,11 +40,11 @@ def linearity_test(model, y):
     fig, ax = plt.subplots(1, 2)
 
     sns.regplot(x=fitted_vals, y=y, lowess=True, ax=ax[0], line_kws={'color': 'red'})
-    ax[0].set_title('Observed vs. Predicted Values', fontsize=16)
+    ax[0].set_title('Observed vs. Predicted Values', fontsize=10)
     ax[0].set(xlabel='Predicted', ylabel='Observed')
 
     sns.regplot(x=fitted_vals, y=resids, lowess=True, ax=ax[1], line_kws={'color': 'red'})
-    ax[1].set_title('Residuals vs. Predicted Values', fontsize=16)
+    ax[1].set_title('Residuals vs. Predicted Values', fontsize=10)
     ax[1].set(xlabel='Predicted', ylabel='Residuals')
     fig.show()
     fig.savefig('./DASC512/finalLinearityTest.png', dpi=300)
@@ -88,11 +63,11 @@ def homoscedasticity_test(model):
     fig, ax = plt.subplots(1, 2)
 
     sns.regplot(x=fitted_vals, y=resids, lowess=True, ax=ax[0], line_kws={'color': 'red'})
-    ax[0].set_title('Residuals vs Fitted', fontsize=16)
+    ax[0].set_title('Residuals vs Fitted', fontsize=10)
     ax[0].set(xlabel='Fitted Values', ylabel='Residuals')
 
     sns.regplot(x=fitted_vals, y=np.sqrt(np.abs(resids_standardized)), lowess=True, ax=ax[1], line_kws={'color': 'red'})
-    ax[1].set_title('Scale-Location', fontsize=16)
+    ax[1].set_title('Scale-Location', fontsize=10)
     ax[1].set(xlabel='Fitted Values', ylabel='sqrt(abs(Residuals))')
     fig.savefig('./DASC512/finalHomoscedasticityTest.png', dpi=300)
     fig.show()
@@ -150,6 +125,31 @@ def calculate_rmse(model, X_test, y_test):
     MSE = mean_squared_error(y_test, predicted)
     rmse = np.sqrt(MSE)
     print(rmse)
+
+# Read the data 
+data = pd.read_csv("./DASC512/student_data.csv", sep = ',')
+# print(data)
+
+# explore data.
+# data.info()
+
+# subset trng data to only data with Y values => first 456 records
+trng_data = data[:456]
+# subset_data.info()
+
+# create the training data
+x_columns = ['X1','X2','X3','X4','X5','X6','X7','X8','X9','X10','X11','X12','X1*X5','X4*X5','X5*X6','X5*X8']
+x = trng_data[x_columns]
+# fig = sns.pairplot(y)
+# skewed right Y so transform
+trng_data['tY'], boxlambda = stats.boxcox(trng_data['Y'])
+# print(trng_data['tY'])
+ty = pd.DataFrame(trng_data['tY'])
+# fig = sns.pairplot(ty)
+
+trng_data = x.assign(tY=ty['tY']) 
+y_column = ['tY']
+y = trng_data[y_column]
 
 # remove features w/ variance < 30% => features which mostly remain at the same level 
 # across different observations, should not ideally be responsible for differing responses in the observations.   
@@ -220,7 +220,6 @@ y = trng_data['tY']
 
 # fig.savefig('FinalPairPlot_x.png', dpi=300)
 
-
 # remove the least statistically significant features(s) i.e. pval > 0.05
 x_columns.remove('X12') # pval 0.9639 
 x_columns.remove('X3') # pval 0.5286
@@ -235,18 +234,16 @@ x_columns.remove('X7') # pval 0.0232
 
 # fig = sns.pairplot(x)
 
-#TODO Skewdness ??
-# trng_data['X11'].hist()
 x = trng_data[x_columns]
 y = trng_data['tY']
 
-model_median_value = sm.OLS(y, x).fit()
+# model_median_value = sm.OLS(y, x).fit()
 
 y, X = dmatrices('tY ~ X5+X6+X11+Q("X1*X5")+Q("X5*X8")', data = trng_data, return_type ='dataframe')
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 50, random_state = 42)
 # med_val_test = X_test
 # med_val_test['Y'] = y_test
-print(model_median_value.summary2(alpha=0.05))
+# print(model_median_value.summary2(alpha=0.05))
 vif = pd.DataFrame()
 vif["VIF Factor"] = [variance_inflation_factor(X.values, i) for i in range(X.shape[1])]
 vif["features"] = X.columns
@@ -311,9 +308,10 @@ print('median_value = ' + str(A) + ' + ' + str(X5) + ' + ' + str(X6) +
 fig, ax = plt.subplots(figsize=(10,6))
 fig.suptitle('Median Value Owner-Occupied Homes Test/Train Prediction Plot')
 fig.tight_layout(pad=3)
-
+plt.xlabel('Median Value (Test)', fontsize=10)
+plt.ylabel('Median Value (Predict)', fontsize=10)
 # subset our test data to align with our model
-test_data = data.loc[456:506, data.columns.isin(['Y', 'X5', 'X6', 'X11', 'X1*X5', 'X5*X8'])]
+test_data = data.loc[456:, data.columns.isin(['Y', 'X5', 'X6', 'X11', 'X1*X5', 'X5*X8'])]
 # print(test_data)
 X = test_data.loc[:, test_data.columns != 'Y']
 y = test_data.loc[:, test_data.columns == 'Y']
@@ -324,14 +322,21 @@ X=sm.add_constant(X)
 
 # test_model = sm.OLS(y,X).fit()
 y_pred = lin_reg.predict(X)
-print(y_pred)
+# print(y_pred)
 y_pred_df = pd.DataFrame(y_pred)
-# print(y_pred_df)
-sns.regplot(x=y_test,y=y_pred_df,ci=95,marker='o',color ='blue')
+y_test_inv_boxcox = inv_boxcox(y_test, boxlambda)
+y_pred_inv_boxcox = inv_boxcox(y_pred_df, boxlambda)
+print(y_pred_inv_boxcox)
+sns.regplot(x=y_test_inv_boxcox,y=y_pred_inv_boxcox,ci=95,marker='o',color ='blue')
 ax.grid()
 fig.savefig('./DASC512/finalPredictionPlot.png', dpi=300)
 
 #calculate prediction intervals
-prediction=lin_reg.get_prediction(test_data)
+prediction=lin_reg.get_prediction(X)
 predints=prediction.summary_frame(alpha=0.05)
-# print(predints)
+print(inv_boxcox(predints['obs_ci_lower'], boxlambda))
+print(inv_boxcox(predints['obs_ci_upper'], boxlambda))
+print(predints)
+
+#TODO: Put the final prints into a dataframe => 
+# Census Tract’, ‘Prediction’, ‘Lower Prediction CI’, ‘Upper Prediction CI
