@@ -200,18 +200,18 @@ mylist = [list(row) for row in mylist]
 #     AIC_scores.loc[i, 'AIC'] = sm.OLS(y, X[mylist[i]]).fit().aic
 
 # print(AIC_scores.sort_values(by='AIC').head())
-# print(mylist[62]) 
-#                  AIC
-# 117100  11136.570481
-# 113711  11136.780719
-# 109092  11137.348787
-# 105703  11137.381919
-# 125995  11137.399064
-# print(mylist[117100]) => ['const', 'X4', 'X5', 'X6', 'X8', 'X9', 'X10', 'X11', 'X12', 'X1_X5', 'X5_X6']
-# print(mylist[113711]) => ['const', 'X1', 'X4', 'X5', 'X6', 'X8', 'X9', 'X10', 'X11', 'X12', 'X5_X6']
-# print(mylist[109092]) => ['X4', 'X5', 'X6', 'X8', 'X9', 'X10', 'X11', 'X12', 'X1_X5', 'X5_X6']
-# print(mylist[105703]) => ['X1', 'X4', 'X5', 'X6', 'X8', 'X9', 'X10', 'X11', 'X12', 'X5_X6']
-# print(mylist[125995]) => ['const', 'X4', 'X5', 'X6', 'X8', 'X9', 'X10', 'X11', 'X12', 'X1_X5', 'X4_X5', 'X5_X6']
+
+#               AIC
+# 33988  4327.624654
+# 81959  4327.692603
+# 57506   4327.81554
+# 88025   4327.92411
+# 54866  4327.950256
+print(mylist[33988]) # => ['X1', 'X5', 'X6', 'X8', 'X11', 'X12', 'X5_X6']
+print(mylist[81959]) # => ['X1', 'X3', 'X4', 'X5', 'X6', 'X8', 'X11', 'X12', 'X5_X6']
+print(mylist[57506]) # => ['X1', 'X4', 'X5', 'X6', 'X8', 'X11', 'X12', 'X5_X6']
+print(mylist[88025]) # => ['X3', 'X4', 'X5', 'X6', 'X8', 'X11', 'X12', 'X1_X5', 'X5_X6']
+print(mylist[54866]) # => ['X1', 'X2', 'X5', 'X6', 'X8', 'X11', 'X12', 'X5_X6']
 
 ###  Recursive Feature Elimination
 from sklearn.feature_selection import RFE
@@ -258,7 +258,7 @@ plt.show()
 print(sfs1.k_feature_names_)
 print(sfs1.k_score_)
 
-impt_features = list(sfs1.k_feature_names_)
+impt_features = list(sfs1.k_feature_names_) # ['X6', 'X12', 'X1_X5', 'X4_X5', 'X5_X6', 'X5_X8']
 
 X = trng_data[impt_features]
 # VIF dataframe
@@ -314,7 +314,7 @@ X5_X6_mean = np.mean(trng_data['X5_X6'])
 trng_data['center_X5_X6'] = trng_data['X5_X6'] - X5_X6_mean
 
 y, X = dmatrices('tY ~ X6+X12+X1_X5+X4_X5+X5_X6+X5_X8', data = trng_data, return_type ='dataframe')
-train_x, test_x, train_y, test_y = train_test_split(X, y, test_size = 0.25, random_state = 42)
+train_x, test_x, train_y, test_y = train_test_split(X, y, test_size = 50, random_state = 42)
 lin_reg = sm.OLS(y,X).fit()
 
 linearity_test(lin_reg, y)
