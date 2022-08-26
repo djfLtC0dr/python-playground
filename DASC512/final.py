@@ -14,7 +14,6 @@ from sklearn.feature_selection import VarianceThreshold
 from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import  RandomForestRegressor
 from sklearn.pipeline import Pipeline
-from sklearn.metrics import roc_auc_score,balanced_accuracy_score
 from scipy.special import inv_boxcox
 from sklearn.preprocessing import PowerTransformer
 from statsmodels.stats.outliers_influence import variance_inflation_factor
@@ -24,7 +23,8 @@ from pandas.core.common import SettingWithCopyWarning
 import warnings
 
 warnings.simplefilter(action="ignore", category=SettingWithCopyWarning)
-
+warnings.filterwarnings("ignore")
+    
 def get_model_stats(x, y):
     # x = trng_data[x_columns]
     results = sm.OLS(y, x).fit()
@@ -163,47 +163,6 @@ trng_data = pd.DataFrame(data.loc[:456, ~data.columns.isin(['Census Tract'])])
 # print(trng_data)
 # subset_data.info()
 
-# separate the independent and target variable 
-X = trng_data.drop(columns=['Y'])
-y = trng_data['Y']
-X=sm.add_constant(X)
-
-# # create the training data
-# x_columns = ['X1','X2','X3','X4','X5','X6','X7','X8','X9','X10','X11','X12','X1_X5','X4_X5','X5_X6','X5_X8']
-# x = trng_data[x_columns]
-# y_column = ['Y']
-# y = trng_data[y_column]
-
-# # remove features w/ variance < 30% => features which mostly remain at the same level 
-# # across different observations, should not ideally be responsible for differing responses in the observations.   
-# var = VarianceThreshold(threshold=0.3)
-# var = var.fit(x,y)
-# cols = var.get_support(indices=True)
-# features = x.columns[cols]
-# # print(features)
-# train_X = trng_data[features] 
-# # print(train_X)
-
-# # re-assign our df w/ only the features w/ variance > 30% + our target variable
-# trng_data = train_X.assign(Y=train_Y) 
-# print(trng_data)
-
-# # Remove features which are not correlated with the response variable 
-# # plt.figure(figsize=(12,12))
-# cor = trng_data.corr()
-# # sns.heatmap(cor, annot=True, cmap=plt.cm.Reds)
-# # plt.show()
-
-# # Consider correlations only with the target variable
-# cor_target = abs(cor['Y'])
-
-# #Select correlations with a correlation above a threshold 10%.
-# features = cor_target[cor_target>0.1]
-# # print(features.index)
-# # => Index(['X1', 'X2', 'X3', 'X5', 'X6', 'X7', 'X9', 'X10', 'X11', 'X12', 'X1_X5','X4_X5', 'X5_X8']
-
-# x_columns = ['X1', 'X2', 'X3', 'X5', 'X6', 'X7', 'X9', 'X10', 'X11', 'X12', 'X1_X5','X4_X5', 'X5_X8']
-
 # Drop outliers
 Q1 = trng_data.quantile(0.25)
 Q3 = trng_data.quantile(0.75)
@@ -212,6 +171,18 @@ index = trng_data[~((trng_data < (Q1 - 1.5 * IQR)) | (trng_data > (Q3 + 1.5 * IQ
 trng_data.drop(index, inplace=True)
 # trng_data.describe()
 # trng_data.info()
+
+# separate the independent and target variable 
+X = trng_data.drop(columns=['Y'])
+y = trng_data['Y']
+X=sm.add_constant(X)
+print(X.columns)
+
+# create the training data
+x_columns = ['const', 'X1','X2','X3','X4','X5','X6','X7','X8','X9','X10','X11','X12','X1_X5','X4_X5','X5_X6','X5_X8']
+# x = trng_data[x_columns]
+y_column = ['Y']
+# y = trng_data[y_column]
 
 ###  Build Every Possible Model
 from itertools import chain, combinations
@@ -242,14 +213,11 @@ mylist = [list(row) for row in mylist]
 # print(mylist[105703]) => ['X1', 'X4', 'X5', 'X6', 'X8', 'X9', 'X10', 'X11', 'X12', 'X5_X6']
 # print(mylist[125995]) => ['const', 'X4', 'X5', 'X6', 'X8', 'X9', 'X10', 'X11', 'X12', 'X1_X5', 'X4_X5', 'X5_X6']
 
-from sklearn.feature_selection import SelectKBest
-from sklearn.feature_selection import f_regression
-
 ###  Recursive Feature Elimination
 from sklearn.feature_selection import RFE
 from sklearn.ensemble import AdaBoostRegressor
-estimator = AdaBoostRegressor(random_state=0, n_estimators=100)
-selector = RFE(estimator, n_features_to_select=8, step=1)
+estimator = AdaBoostRegressor(random_state=42, n_estimators=100)
+selector = RFE(estimator, n_features_to_select=5, step=1)
 selector = selector.fit(X, y)
 filter = selector.support_
 print("Num Features: %d" % selector.n_features_)
@@ -262,32 +230,54 @@ print(features)
 print("Selected features:")
 print(features[filter]) 
 # => 'X6', 'X8', 'X10', 'X11', 'X12', 'X1_X5', 'X5_X6', 'X5_X8'
-x_columns = ['X5', 'X6', 'X11', 'X1_X5', 'X5_X8']
+# x_columns = ['X5', 'X6', 'X11', 'X1_X5', 'X5_X8']
 
-# VIF dataframe
-vif_data = compute_vif(x_columns)
-print(vif_data)
 
 # step-wise regression by P>|t|
-# x_columns.remove('X4') #0.9583
-# x_columns.remove('X5_X6') #0.6188
-# x_columns.remove('X6') #0.7102
-# x_columns.remove('X10') #0.3972
-# x_columns.remove('X11') #0.4553
-# x_columns.remove('X12') #0.4093
+from mlxtend.feature_selection import SequentialFeatureSelector as sfs
+from mlxtend.plotting import plot_sequential_feature_selection as plot_sfs
+lr = LinearRegression()
 
+# Build step forward feature selection
+sfs1 = sfs(lr, 
+          k_features=7, 
+          forward=True, 
+          floating=False, 
+          scoring='neg_mean_squared_error',
+          fixed_features=(13, 14, 15, 16), # Final rqmmts 'X1_X5','X4_X5','X5_X6','X5_X8' 
+          cv=10)
 
-X = trng_data[x_columns]
+# Perform SFFS
+feature_names = tuple(x_columns)
+sfs1 = sfs1.fit(X, y, custom_feature_names=feature_names)
+fig = plot_sfs(sfs1.get_metric_dict(), kind='std_err')
+
+plt.title('Sequential Forward Selection (w. StdErr)')
+plt.grid()
+plt.show()
+print(sfs1.k_feature_names_)
+print(sfs1.k_score_)
+
+impt_features = list(sfs1.k_feature_names_)
+
+X = trng_data[impt_features]
+# VIF dataframe
+# x_columns.remove('X1') #503.224622
+# x_columns.remove('X3') #11.805574
+vif_data = compute_vif(impt_features)
+
+# remove X1 due to high multicolinearity w/ X1_X5
+impt_features.remove('X1')#423.472807 
+vif_data = compute_vif(impt_features)
+print(vif_data)
+
+X = trng_data[impt_features]
+
 # fig = sns.pairplot(X)
 # fig.savefig('finalPairPlot_x.png', dpi=300)
 
-# fix skew
-# pt = PowerTransformer()
-# pt.fit(X)
-# X = pd.DataFrame(pt.transform(X), columns=x_columns)
-
 # fig = sns.pairplot(X) #BINGO!!
-# fig.savefig('finalPairPlot_x.png', dpi=300)
+# fig.savefig('finalPairPlot_x_pt.png', dpi=300)
 
 trng_data = X.assign(Y=y) 
 # Transform our non-normal data
@@ -295,35 +285,43 @@ trng_data = X.assign(Y=y)
 trng_data['tY'], boxlambda = stats.boxcox(trng_data['Y'])
 # print(trng_data['tY'])
 # ty = pd.DataFrame(trng_data['tY'])
-# fig = sns.pairplot(ty)
 
+# X12', 'X1_X5', 'X4_X5', 'X5_X6' skewed
 trng_data['log_Y'] = np.log(trng_data['Y'])
 trng_data['inv_Y'] = 1/trng_data['Y']
 trng_data['Y_sqrd'] = trng_data['Y']**2
 Y_mean = np.mean(trng_data['Y'])
 trng_data['center_Y'] = trng_data['Y'] - Y_mean
-trng_data['log_X5'] = np.log(trng_data['X5'])
-trng_data['inv_X5'] = 1/trng_data['X5']
-X5_mean = np.mean(trng_data['X5'])
-trng_data['center_X5'] = trng_data['X5'] - X5_mean
-trng_data['log_X11'] = np.log(trng_data['X11'])
-trng_data['inv_X11'] = 1/trng_data['X11']
-X11_mean = np.mean(trng_data['X11'])
-trng_data['center_X11'] = trng_data['X11'] - X11_mean
+
+trng_data['log_X12'] = np.log(trng_data['X12'])
+trng_data['inv_X12'] = 1/trng_data['X12']
+X12_mean = np.mean(trng_data['X12'])
+trng_data['center_X12'] = trng_data['X12'] - X12_mean
+
 trng_data['log_X1_X5'] = np.log(trng_data['X1_X5'])
 trng_data['inv_X1_X5'] = 1/trng_data['X1_X5']
-X1X5_mean = np.mean(trng_data['X1_X5'])
-trng_data['center_X1_X5'] = trng_data['X1_X5'] - X1X5_mean
+X1_X5_mean = np.mean(trng_data['X1_X5'])
+trng_data['center_X1_X5'] = trng_data['X1_X5'] - X1_X5_mean
 
-y, X = dmatrices('tY ~ X5+X6+X11+X1_X5+X5_X8', data = trng_data, return_type ='dataframe')
-train_x, test_x, train_y, test_y = train_test_split(X, y, test_size = 50, random_state = 42)
+trng_data['log_X4_X5'] = np.log(trng_data['X4_X5'])
+trng_data['inv_X4_X5'] = 1/trng_data['X4_X5']
+X4_X5_mean = np.mean(trng_data['X4_X5'])
+trng_data['center_X4_X5'] = trng_data['X4_X5'] - X4_X5_mean
+
+trng_data['log_X5_X6'] = np.log(trng_data['X5_X6'])
+trng_data['inv_X5_X6'] = 1/trng_data['X5_X6']
+X5_X6_mean = np.mean(trng_data['X5_X6'])
+trng_data['center_X5_X6'] = trng_data['X5_X6'] - X5_X6_mean
+
+y, X = dmatrices('tY ~ X6+X12+X1_X5+X4_X5+X5_X6+X5_X8', data = trng_data, return_type ='dataframe')
+train_x, test_x, train_y, test_y = train_test_split(X, y, test_size = 0.25, random_state = 42)
 lin_reg = sm.OLS(y,X).fit()
 
 linearity_test(lin_reg, y)
 homoscedasticity_test(lin_reg)
 normality_of_residuals_test(lin_reg)
 
-acf = smt.graphics.plot_acf(lin_reg.resid, lags=40 , alpha=0.05)
+acf = smt.graphics.plot_acf(lin_reg.resid, lags=25 , alpha=0.05)
 acf.savefig('finalACF.png', dpi=300)
 
 #Durbin Watson Test, the test statistic is between 0 and 4, <2 is positive correlation, >2 is negative correlation
@@ -340,15 +338,16 @@ for column in X.columns:
 # print(lin_reg.params)
 A = round(lin_reg.params['Intercept'], 4)
 # print(A)
-X5 = round(lin_reg.params['X5'], 4)
 X6 = round(lin_reg.params['X6'], 4)
-X11 = round(lin_reg.params['X11'], 4)
+X12 = round(lin_reg.params['X12'], 4)
 X1_X5 = round(lin_reg.params['X1_X5'], 4)
+X4_X5 = round(lin_reg.params['X4_X5'], 4)
+X5_X6 = round(lin_reg.params['X5_X6'], 4)
 X5_X8 = round(lin_reg.params['X5_X8'], 4)
 
-median_value = A + X5 + X6 + X11 + X1_X5 + X5_X8
-print('median_value = ' + str(A) + ' + ' + str(X5) + ' + ' + str(X6) + 
-    ' + ' + str(X11) + ' + ' + str(X1_X5) + ' + ' + str(X5_X8))
+median_value = A + X6 + X12 + X1_X5 + X4_X5 + X5_X6 + X5_X8
+print('median_value = ' + str(A) + ' + ' + str(X6) + ' + ' + str(X12) + 
+    ' + ' + str(X1_X5) + ' + ' + str(X4_X5) + ' + ' + str(X5_X6) + ' + '+ str(X5_X8))
 
 # Plot our model using Test Data to determine our y_pred
 fig, ax = plt.subplots(figsize=(10,6))
@@ -357,16 +356,12 @@ fig.tight_layout(pad=3)
 plt.xlabel('Median Value (Test)', fontsize=10)
 plt.ylabel('Median Value (Predict)', fontsize=10)
 # subset our test data to align with our model
-test_data = data.loc[456:, data.columns.isin(['Y', 'X5', 'X6', 'X11', 'X1_X5', 'X5_X8'])]
+test_data = data.loc[456:, data.columns.isin(['Y', 'X6', 'X12', 'X1_X5', 'X4_X5', 'X5_X6', 'X5_X8'])]
 # print(test_data)
 X = test_data.loc[:, test_data.columns != 'Y']
 y = test_data.loc[:, test_data.columns == 'Y']
 X=sm.add_constant(X)
 
-# X_train, X_test, y_train, y_test = train_test_split(X, y,
-#                                         test_size=50, random_state=42)
-
-# test_model = sm.OLS(y,X).fit()
 y_pred = lin_reg.predict(X)
 # print(y_pred)
 y_pred_df = pd.DataFrame(y_pred)
